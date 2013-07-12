@@ -9,6 +9,9 @@ suite('Firework', function() {
         sut = new firework.Firework('red');
     });
 
+    teardown(function() {
+    });
+
     suite('contract', function() {
         test('should define getColour() method', function() {
             expect(sut.getColour).not.to.be(undefined);
@@ -151,8 +154,5 @@ suite('Firework', function() {
             expect(addFireworkCompleteObserver1called).to.be(true);
             expect(addFireworkCompleteObserver2called).to.be(true);
         });
-    });
-
-    teardown(function() {
     });
 });
