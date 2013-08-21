@@ -2,6 +2,8 @@ create a new game, setting an optional password, number of players and game name
 View a list of games in progress, with details of name, whether a password is required, max number of players and current number of players
 join a game in progress, optionally entering the game's password
 
+must be informed of required technologies (javascript/cookies) if they are not enabled
+
 In game
 Re-join a game automatically if browser is closed or connection lost
 View the current status of the game
@@ -32,3 +34,10 @@ offered option to quit
 
 Game play sequence recorded with game info for future analysis
 List of historical games kept
+
+
+
+Persistence
+
+Game state should be persisted but no provision made to resume games interrupted if the server dies
+

@@ -1,0 +1,32 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+<title>Hanabi</title>
+<link rel="stylesheet" type="text/css" href="static/style.css" />
+
+<script src="/static/jquery-2.0.3.js"></script>
+<script src="/static/jquery.cookie.js"></script>
+<script src="/socket.io/socket.io.js"></script>
+<script>
+    var socket = io.connect('http://localhost:3000');
+
+    socket.on('connect', function (data) {
+        socket.emit('routeMe', $.cookie('game_session'));
+    });
+
+    socket.on('setGameSessionCookie', function (data) {
+        $.cookie('game_session', data, { expires: 7});
+    });
+
+    socket.on('clearGameSessionCookie', function (data) {
+        $.removeCookie('game_session');
+    });
+</script>
+
+</head>
+<body>
+Testing
+</body>
+</html>
