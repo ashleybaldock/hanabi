@@ -6,6 +6,7 @@
 <title>Hanabi</title>
 <link rel="stylesheet" type="text/css" href="static/style.css" />
 
+<script src="http://yui.yahooapis.com/3.11.0/build/yui/yui-min.js"></script>
 <script src="/static/jquery-2.0.3.js"></script>
 <script src="/static/jquery.cookie.js"></script>
 <script src="/socket.io/socket.io.js"></script>
@@ -23,10 +24,90 @@
     socket.on('clearGameSessionCookie', function (data) {
         $.removeCookie('game_session');
     });
+
+
+    // Position game board elements based on count of players and current window size
+    // Called whenever the window is resized
+    var layout = function (playerCount) {
+        var makePlayer = function (Y, name, vertical) {
+            var newPlayer = Y.Node.create('<div class="player" id="' + name + '" />');
+            newPlayer.appendChild(Y.Node.create('<div id="' + name + '_slot1"></div>'));
+            newPlayer.appendChild(Y.Node.create('<div id="' + name + '_slot2"></div>'));
+            newPlayer.appendChild(Y.Node.create('<div id="' + name + '_slot3"></div>'));
+            newPlayer.appendChild(Y.Node.create('<div id="' + name + '_slot4"></div>'));
+            newPlayer.appendChild(Y.Node.create('<div id="' + name + '_slot5"></div>'));
+            newPlayer.all('div').addClass('slot');
+            if (vertical) {
+                newPlayer.all('div').addClass('vertical');
+            }
+            return newPlayer;
+        };
+
+        var makeFireworks = function (Y) {
+            var fireworks = Y.Node.create('<div class="fireworks" />');
+            fireworks.appendChild(Y.Node.create('<div id="firework_red"></div>'));
+            fireworks.appendChild(Y.Node.create('<div id="firework_blue"></div>'));
+            fireworks.appendChild(Y.Node.create('<div id="firework_green"></div>'));
+            fireworks.appendChild(Y.Node.create('<div id="firework_yellow"></div>'));
+            fireworks.appendChild(Y.Node.create('<div id="firework_white"></div>'));
+            fireworks.all('div').addClass('slot');
+            return fireworks;
+        };
+
+        var makeClueTokens = function (Y) {
+            var clues = Y.Node.create('<div class="clues" />');
+            var i;
+            for (i = 0; i < 9; i++) {
+                if ((i % 3) === 0) {
+                    clues.appendChild(Y.Node.create('<div class="clue token endline" />'));
+                } else {
+                    clues.appendChild(Y.Node.create('<div class="clue token" />'));
+                }
+            }
+            return clues;
+        };
+
+        var makeLifeTokens = function (Y) {
+            var lives = Y.Node.create('<div class="lives" />');
+            lives.appendChild(Y.Node.create('<div class="life token" />'));
+            lives.appendChild(Y.Node.create('<div class="life token" />'));
+            lives.appendChild(Y.Node.create('<div class="life token" />'));
+            return lives;
+        };
+
+        YUI().use('node', function (Y) {
+            var width = $(window).width();
+            var height = $(window).height();
+
+            var gameboard = Y.one('#gameboard');
+
+            var player1 = makePlayer(Y, 'player1', true);
+            gameboard.appendChild(player1);
+            player1.setY(height / 2 - parseInt(player1.getComputedStyle('height'), 10) / 2);
+            var player2 = makePlayer(Y, 'player1');
+            gameboard.appendChild(player2);
+            var fireworks = makeFireworks(Y);
+            gameboard.appendChild(fireworks);
+            var clues = makeClueTokens(Y);
+            gameboard.appendChild(clues);
+            var lives = makeLifeTokens(Y);
+            gameboard.appendChild(lives);
+        });
+    };
+
+    layout();
 </script>
 
 </head>
 <body>
-Testing
+<div class="gameboard" id="gameboard">
+
+    <!--<div class="card red" id="c1">1</div>
+    <div class="card blue" id="c2">2</div>
+    <div class="card green" id="c3">3</div>
+    <div class="card yellow" id="c4">4</div>
+    <div class="card white" id="c5">5</div>-->
+
+</div>
 </body>
 </html>
