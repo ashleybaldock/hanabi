@@ -75,6 +75,16 @@
             return lives;
         };
 
+        var makeDrawPile = function (Y) {
+            var draw = Y.Node.create('<div id="draw" class="slot" />');
+            return draw;
+        };
+
+        var makeDiscardPile = function (Y) {
+            var discard = Y.Node.create('<div id="discard" class="slot" />');
+            return discard;
+        };
+
         YUI().use('node', function (Y) {
             var width = $(window).width();
             var height = $(window).height();
@@ -92,6 +102,21 @@
             gameboard.appendChild(clues);
             var lives = makeLifeTokens(Y);
             gameboard.appendChild(lives);
+            var draw = makeDrawPile(Y);
+            gameboard.appendChild(draw);
+            var discard = makeDiscardPile(Y);
+            gameboard.appendChild(discard);
+
+            // Set size of cards/slots relative to screen size
+            var tileSize = Math.min(width/8, height/8);
+
+            gameboard.all('div.slot').setStyles({'width': tileSize + 'px', 'height': tileSize + 'px'});;
+
+            
+        });
+
+        YUI().use('event-resize', function (Y) {
+            Y.on('windowresize', layout);
         });
     };
 
@@ -100,6 +125,56 @@
 
 </head>
 <body>
+
+<div id="splash">
+    <div class="yui3-widget-hd">Hanabi</div>
+    <div class="yui3-widget-bd">
+        <form>
+            <button id="new_game">New Game</button>
+            <button id="join_game">Join Game</button>
+        </form>
+    </div>
+    <div class="yui3-widget-ft"></div>
+</div>
+
+<div id="new_game">
+    <div class="yui3-widget-hd">New Game</div>
+    <div class="yui3-widget-bd">
+        <form>
+            <input type="text" id="new_game_name" />
+            <input type="text" id="new_game_password" />
+            <button id="new_game_cancel">Cancel</button>
+            <button id="new_game_create">Create Game</button>
+        </form>
+    </div>
+    <div class="yui3-widget-ft"></div>
+<h1>New Game</h1>
+</div>
+
+<div id="game_list">
+    <div class="yui3-widget-hd">Games in progress</div>
+    <div class="yui3-widget-bd">
+        List of games...
+        <form>
+            <button id="game_list_cancel">Cancel</button>
+            <button id="game_list_join">Join</button>
+        </form>
+    </div>
+    <div class="yui3-widget-ft"></div>
+</div>
+
+<div id="password">
+    <div class="yui3-widget-hd">Password required</div>
+    <div class="yui3-widget-bd">
+        <form>
+            <input type="text" />
+            <button id="password_cancel">Cancel</button>
+            <button id="password_enter">Submit</button>
+        </form>
+    </div>
+    <div class="yui3-widget-ft"></div>
+</div>
+
 <div class="gameboard" id="gameboard">
 
     <!--<div class="card red" id="c1">1</div>
