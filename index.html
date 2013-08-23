@@ -29,98 +29,111 @@
     // Position game board elements based on count of players and current window size
     // Called whenever the window is resized
     var layout = function (playerCount) {
-        var makePlayer = function (Y, name, vertical) {
-            var newPlayer = Y.Node.create('<div class="player" id="' + name + '" />');
-            newPlayer.appendChild(Y.Node.create('<div id="' + name + '_slot1"></div>'));
-            newPlayer.appendChild(Y.Node.create('<div id="' + name + '_slot2"></div>'));
-            newPlayer.appendChild(Y.Node.create('<div id="' + name + '_slot3"></div>'));
-            newPlayer.appendChild(Y.Node.create('<div id="' + name + '_slot4"></div>'));
-            newPlayer.appendChild(Y.Node.create('<div id="' + name + '_slot5"></div>'));
-            newPlayer.all('div').addClass('slot');
-            if (vertical) {
-                newPlayer.all('div').addClass('vertical');
-            }
-            return newPlayer;
-        };
-
-        var makeFireworks = function (Y) {
-            var fireworks = Y.Node.create('<div class="fireworks" />');
-            fireworks.appendChild(Y.Node.create('<div id="firework_red"></div>'));
-            fireworks.appendChild(Y.Node.create('<div id="firework_blue"></div>'));
-            fireworks.appendChild(Y.Node.create('<div id="firework_green"></div>'));
-            fireworks.appendChild(Y.Node.create('<div id="firework_yellow"></div>'));
-            fireworks.appendChild(Y.Node.create('<div id="firework_white"></div>'));
-            fireworks.all('div').addClass('slot');
-            return fireworks;
-        };
-
-        var makeClueTokens = function (Y) {
-            var clues = Y.Node.create('<div class="clues" />');
-            var i;
-            for (i = 0; i < 9; i++) {
-                if ((i % 3) === 0) {
-                    clues.appendChild(Y.Node.create('<div class="clue token endline" />'));
-                } else {
-                    clues.appendChild(Y.Node.create('<div class="clue token" />'));
-                }
-            }
-            return clues;
-        };
-
-        var makeLifeTokens = function (Y) {
-            var lives = Y.Node.create('<div class="lives" />');
-            lives.appendChild(Y.Node.create('<div class="life token" />'));
-            lives.appendChild(Y.Node.create('<div class="life token" />'));
-            lives.appendChild(Y.Node.create('<div class="life token" />'));
-            return lives;
-        };
-
-        var makeDrawPile = function (Y) {
-            var draw = Y.Node.create('<div id="draw" class="slot" />');
-            return draw;
-        };
-
-        var makeDiscardPile = function (Y) {
-            var discard = Y.Node.create('<div id="discard" class="slot" />');
-            return discard;
-        };
-
         YUI().use('node', function (Y) {
             var width = $(window).width();
             var height = $(window).height();
 
             var gameboard = Y.one('#gameboard');
 
-            var player1 = makePlayer(Y, 'player1', true);
-            gameboard.appendChild(player1);
-            player1.setY(height / 2 - parseInt(player1.getComputedStyle('height'), 10) / 2);
-            var player2 = makePlayer(Y, 'player1');
-            gameboard.appendChild(player2);
-            var fireworks = makeFireworks(Y);
-            gameboard.appendChild(fireworks);
-            var clues = makeClueTokens(Y);
-            gameboard.appendChild(clues);
-            var lives = makeLifeTokens(Y);
-            gameboard.appendChild(lives);
-            var draw = makeDrawPile(Y);
-            gameboard.appendChild(draw);
-            var discard = makeDiscardPile(Y);
-            gameboard.appendChild(discard);
+            var player1 = gameboard.one('#player1');
+            var player2 = gameboard.one('#player2');
+            var player3 = gameboard.one('#player3');
+            var player4 = gameboard.one('#player4');
+            var player5 = gameboard.one('#player5');
+            var fireworks = gameboard.one('#fireworks');
+            var clues = gameboard.one('#clues');
+            var lives = gameboard.one('#lives');
+            var draw = gameboard.one('#draw');
+            var discard = gameboard.one('#discard');
+            var board = gameboard.one('#board');
 
             // Set size of cards/slots relative to screen size
-            var tileSize = Math.min(width/8, height/8);
+            var tileSize = Math.min(width/10, height/8);
 
-            gameboard.all('div.slot').setStyles({'width': tileSize + 'px', 'height': tileSize + 'px'});;
+            gameboard.all('div.slot, div.card').setStyles({'width': tileSize + 'px', 'height': tileSize + 'px'});
+            gameboard.all('div.token').setStyles({'width': tileSize / 2 + 'px', 'height': tileSize / 2 + 'px'});
 
+            // Set position of elements (this depends on the slot size having been set already)
+            //player1.setY(height / 2 - parseInt(player1.getComputedStyle('height'), 10) / 2);
+
+            // Position game element containers
+            board.setX(width / 2 - parseInt(board.getComputedStyle('width'), 10) / 2);
+            board.setY(height / 8 * 5 - parseInt(board.getComputedStyle('height'), 10) / 2);
+            fireworks.setX(width / 2 - parseInt(fireworks.getComputedStyle('width'), 10) / 2);
+            fireworks.setY(height / 8 * 3 - parseInt(fireworks.getComputedStyle('height'), 10) / 2);
+
+
+            // Player 1 always visible at bottom center of screen
+            player1.setY(height / 8 * 7 - parseInt(player1.getComputedStyle('height'), 10) / 2);
+            player1.setX(width / 2 - parseInt(player1.getComputedStyle('width'), 10) / 2);
+
+            // 2 player game, only Player 2 visible, top center of screen
+            if (playerCount === 2) {
+                player2.setStyle('display', 'block');
+                player2.removeClass('vertical');
+                player2.setY(height / 8 - parseInt(player1.getComputedStyle('height'), 10) / 2);
+                player2.setX(width / 2 - parseInt(player1.getComputedStyle('width'), 10) / 2);
+                player3.setStyle('display', 'none');
+                player4.setStyle('display', 'none');
+                player5.setStyle('display', 'none');
+            }
+
+            // 3 player game, only Player 2 and 3 visible, top left and right of screen
+            if (playerCount === 3) {
+                player2.setStyle('display', 'block');
+                player2.removeClass('vertical');
+                player2.setY(height / 8 - parseInt(player1.getComputedStyle('height'), 10) / 2);
+                player2.setX(width / 4 - parseInt(player1.getComputedStyle('width'), 10) / 2);
+                player3.setStyle('display', 'block');
+                player3.removeClass('vertical');
+                player3.setY(height / 8 - parseInt(player1.getComputedStyle('height'), 10) / 2);
+                player3.setX(width / 4 * 3 - parseInt(player1.getComputedStyle('width'), 10) / 2);
+                player4.setStyle('display', 'none');
+                player5.setStyle('display', 'none');
+            }
+
+            // 4 player game, only Player 2, 3 and 4 visible, top center, left and right
+            if (playerCount === 4) {
+                player2.setStyle('display', 'block');
+                player2.addClass('vertical');
+                player2.setY(height / 8 * 5 - parseInt(player1.getComputedStyle('height'), 10) / 2);
+                player2.setX(width / 8 - parseInt(player1.getComputedStyle('width'), 10) / 2);
+                player3.setStyle('display', 'block');
+                player3.removeClass('vertical');
+                player3.setY(height / 8 - parseInt(player1.getComputedStyle('height'), 10) / 2);
+                player3.setX(width / 2 - parseInt(player1.getComputedStyle('width'), 10) / 2);
+                player4.setStyle('display', 'block');
+                player4.addClass('vertical');
+                player4.setY(height / 8 * 5 - parseInt(player1.getComputedStyle('height'), 10) / 2);
+                player4.setX(width / 8 * 7 - parseInt(player1.getComputedStyle('width'), 10) / 2);
+                player5.setStyle('display', 'none');
+            }
+
+            // 5 player game, all Players visible, all positions
+            if (playerCount === 5) {
+                player2.setStyle('display', 'block');
+                player2.addClass('vertical');
+                player2.setY(height / 8 * 5 - parseInt(player1.getComputedStyle('height'), 10) / 2);
+                player2.setX(width / 8 - parseInt(player1.getComputedStyle('width'), 10) / 2);
+                player3.setStyle('display', 'block');
+                player3.removeClass('vertical');
+                player3.setY(height / 8 - parseInt(player1.getComputedStyle('height'), 10) / 2);
+                player3.setX(width / 2 - parseInt(player1.getComputedStyle('width'), 10) / 2);
+                player4.setStyle('display', 'block');
+                player4.addClass('vertical');
+                player4.setY(height / 8 * 5 - parseInt(player1.getComputedStyle('height'), 10) / 2);
+                player4.setX(width / 8 * 7 - parseInt(player1.getComputedStyle('width'), 10) / 2);
+                player5.setStyle('display', 'none');
+            }
             
-        });
-
-        YUI().use('event-resize', function (Y) {
-            Y.on('windowresize', layout);
         });
     };
 
-    layout();
+    YUI().use('event-resize', function (Y) {
+        Y.on('windowresize', function () { layout(3); });
+    });
+
+    layout(3);
 </script>
 
 </head>
@@ -182,6 +195,74 @@
     <div class="card green" id="c3">3</div>
     <div class="card yellow" id="c4">4</div>
     <div class="card white" id="c5">5</div>-->
+
+    <div class="player" id="player1">
+        <div class="slot" id="player1_slot1"></div>
+        <div class="slot" id="player1_slot2"></div>
+        <div class="slot" id="player1_slot3"></div>
+        <div class="slot" id="player1_slot4"></div>
+        <div class="slot" id="player1_slot5"></div>
+    </div>
+    <div class="player" id="player2">
+        <div class="slot" id="player2_slot1"></div>
+        <div class="slot" id="player2_slot2"></div>
+        <div class="slot" id="player2_slot3"></div>
+        <div class="slot" id="player2_slot4"></div>
+        <div class="slot" id="player2_slot5"></div>
+    </div>
+    <div class="player" id="player3">
+        <div class="slot" id="player3_slot1"></div>
+        <div class="slot" id="player3_slot2"></div>
+        <div class="slot" id="player3_slot3"></div>
+        <div class="slot" id="player3_slot4"></div>
+        <div class="slot" id="player3_slot5"></div>
+    </div>
+    <div class="player" id="player4">
+        <div class="slot" id="player4_slot1"></div>
+        <div class="slot" id="player4_slot2"></div>
+        <div class="slot" id="player4_slot3"></div>
+        <div class="slot" id="player4_slot4"></div>
+        <div class="slot" id="player4_slot5"></div>
+    </div>
+    <div class="player" id="player5">
+        <div class="slot" id="player5_slot1"></div>
+        <div class="slot" id="player5_slot2"></div>
+        <div class="slot" id="player5_slot3"></div>
+        <div class="slot" id="player5_slot4"></div>
+        <div class="slot" id="player5_slot5"></div>
+    </div>
+
+    <div id="fireworks">
+        <div class="slot" id="firework_red"></div>
+        <div class="slot" id="firework_blue"></div>
+        <div class="slot" id="firework_green"></div>
+        <div class="slot" id="firework_yellow"></div>
+        <div class="slot" id="firework_white"></div>
+    </div>
+
+    <div id="board">
+        <div class="slot" id="draw"></div>
+
+        <div id="clues">
+            <div class="clue token" id="clue_token_1"></div>
+            <div class="clue token" id="clue_token_2"></div>
+            <div class="clue token" id="clue_token_3"></div>
+            <div class="clue token endline" id="clue_token_4"></div>
+            <div class="clue token" id="clue_token_5"></div>
+            <div class="clue token" id="clue_token_6"></div>
+            <div class="clue token endline" id="clue_token_7"></div>
+            <div class="clue token" id="clue_token_8"></div>
+            <div class="clue token" id="clue_token_9"></div>
+        </div>
+
+        <div id="lives">
+            <div class="life token" id="life_token_1"></div>
+            <div class="life token" id="life_token_2"></div>
+            <div class="life token" id="life_token_3"></div>
+        </div>
+
+        <div class="slot" id="discard"></div>
+    </div>
 
 </div>
 </body>

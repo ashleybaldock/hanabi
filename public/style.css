@@ -1,16 +1,19 @@
 #splash, #new_game, #game_list, #password {
-    visibility: hidden;
+    display: none;
     position: absolute;
 }
 
-.clues, .lives, .fireworks, .player {
+#board, #fireworks, .player {
     border: 2px solid #606060;
     background-color: #EFEFEF;
     z-index: 0;
     position: absolute;
 }
+#clues, #lives {
+    float: left;
+}
 
-.vertical.slot {
+.vertical .slot {
     clear: both;
 }
 
