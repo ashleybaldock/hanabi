@@ -25,6 +25,11 @@
         $.removeCookie('game_session');
     });
 
+    var server_new_game = function (name, password, playerCount) {
+        //socket.emit('newGame', {name, password, playerCount});
+    };
+
+
 
     // Position game board elements based on count of players and current window size
     // Called whenever the window is resized
@@ -50,29 +55,67 @@
             // Set size of cards/slots relative to screen size
             var tileSize = Math.min(width/10, height/8);
 
+            var position_bottomMiddle = function (pane) {
+                pane.setStyle('display', 'block');
+                pane.addClass('horizontal');
+                pane.setY(height / 8 * 7 - parseInt(pane.getComputedStyle('height'), 10) / 2);
+                pane.setX(width / 2 - parseInt(pane.getComputedStyle('width'), 10) / 2);
+            };
+
+            var position_topLeft = function (pane) {
+                pane.setStyle('display', 'block');
+                pane.addClass('horizontal');
+                pane.setY(height / 8 - parseInt(pane.getComputedStyle('height'), 10) / 2);
+                pane.setX(width / 4 - parseInt(pane.getComputedStyle('width'), 10) / 2);
+            };
+
+            var position_topRight = function (pane) {
+                pane.setStyle('display', 'block');
+                pane.addClass('horizontal');
+                pane.setY(height / 8 - parseInt(pane.getComputedStyle('height'), 10) / 2);
+                pane.setX(width / 4 * 3 - parseInt(pane.getComputedStyle('width'), 10) / 2);
+            };
+
+            var position_topMiddle = function (pane) {
+                pane.setStyle('display', 'block');
+                pane.addClass('horizontal');
+                pane.setY(height / 8 - parseInt(pane.getComputedStyle('height'), 10) / 2);
+                pane.setX(width / 2 - parseInt(pane.getComputedStyle('width'), 10) / 2);
+            };
+
+            var position_left = function (pane) {
+                pane.setStyle('display', 'block');
+                pane.addClass('vertical');
+                pane.setY(height / 8 * 5 - parseInt(pane.getComputedStyle('height'), 10) / 2);
+                pane.setX(width / 8 - parseInt(pane.getComputedStyle('width'), 10) / 2);
+            };
+
+            var position_right = function (pane) {
+                pane.setStyle('display', 'block');
+                pane.addClass('vertical');
+                pane.setY(height / 8 * 5 - parseInt(pane.getComputedStyle('height'), 10) / 2);
+                pane.setX(width / 8 * 7 - parseInt(pane.getComputedStyle('width'), 10) / 2);
+            };
+
+            var hide_pane = function (pane) {
+                pane.setStyle('display', 'none');
+            };
+
             gameboard.all('div.slot, div.card').setStyles({'width': tileSize + 'px', 'height': tileSize + 'px'});
-            gameboard.all('div.token').setStyles({'width': tileSize / 2 + 'px', 'height': tileSize / 2 + 'px'});
+            gameboard.all('div.token').setStyles({'width': tileSize / 4 + 'px', 'height': tileSize / 4 + 'px'});
 
             // Set position of elements (this depends on the slot size having been set already)
-            //player1.setY(height / 2 - parseInt(player1.getComputedStyle('height'), 10) / 2);
 
             // Position game element containers
             board.setX(width / 2 - parseInt(board.getComputedStyle('width'), 10) / 2);
-            board.setY(height / 8 * 5 - parseInt(board.getComputedStyle('height'), 10) / 2);
-            fireworks.setX(width / 2 - parseInt(fireworks.getComputedStyle('width'), 10) / 2);
-            fireworks.setY(height / 8 * 3 - parseInt(fireworks.getComputedStyle('height'), 10) / 2);
-
+            board.setY(height / 2 - parseInt(board.getComputedStyle('height'), 10) / 2);
 
             // Player 1 always visible at bottom center of screen
-            player1.setY(height / 8 * 7 - parseInt(player1.getComputedStyle('height'), 10) / 2);
-            player1.setX(width / 2 - parseInt(player1.getComputedStyle('width'), 10) / 2);
+            position_bottomMiddle(player1);
 
             // 2 player game, only Player 2 visible, top center of screen
             if (playerCount === 2) {
-                player2.setStyle('display', 'block');
-                player2.removeClass('vertical');
-                player2.setY(height / 8 - parseInt(player1.getComputedStyle('height'), 10) / 2);
-                player2.setX(width / 2 - parseInt(player1.getComputedStyle('width'), 10) / 2);
+                position_topMiddle(player2);
                 player3.setStyle('display', 'none');
                 player4.setStyle('display', 'none');
                 player5.setStyle('display', 'none');
@@ -80,117 +123,236 @@
 
             // 3 player game, only Player 2 and 3 visible, top left and right of screen
             if (playerCount === 3) {
-                player2.setStyle('display', 'block');
-                player2.removeClass('vertical');
-                player2.setY(height / 8 - parseInt(player1.getComputedStyle('height'), 10) / 2);
-                player2.setX(width / 4 - parseInt(player1.getComputedStyle('width'), 10) / 2);
-                player3.setStyle('display', 'block');
-                player3.removeClass('vertical');
-                player3.setY(height / 8 - parseInt(player1.getComputedStyle('height'), 10) / 2);
-                player3.setX(width / 4 * 3 - parseInt(player1.getComputedStyle('width'), 10) / 2);
-                player4.setStyle('display', 'none');
-                player5.setStyle('display', 'none');
+                position_topLeft(player2);
+                position_topRight(player3);
+                hide_pane(player4);
+                hide_pane(player5);
             }
 
             // 4 player game, only Player 2, 3 and 4 visible, top center, left and right
             if (playerCount === 4) {
-                player2.setStyle('display', 'block');
-                player2.addClass('vertical');
-                player2.setY(height / 8 * 5 - parseInt(player1.getComputedStyle('height'), 10) / 2);
-                player2.setX(width / 8 - parseInt(player1.getComputedStyle('width'), 10) / 2);
-                player3.setStyle('display', 'block');
-                player3.removeClass('vertical');
-                player3.setY(height / 8 - parseInt(player1.getComputedStyle('height'), 10) / 2);
-                player3.setX(width / 2 - parseInt(player1.getComputedStyle('width'), 10) / 2);
-                player4.setStyle('display', 'block');
-                player4.addClass('vertical');
-                player4.setY(height / 8 * 5 - parseInt(player1.getComputedStyle('height'), 10) / 2);
-                player4.setX(width / 8 * 7 - parseInt(player1.getComputedStyle('width'), 10) / 2);
-                player5.setStyle('display', 'none');
+                position_left(player2);
+                position_topMiddle(player3);
+                position_right(player4);
+                hide_pane(player5);
             }
 
             // 5 player game, all Players visible, all positions
             if (playerCount === 5) {
-                player2.setStyle('display', 'block');
-                player2.addClass('vertical');
-                player2.setY(height / 8 * 5 - parseInt(player1.getComputedStyle('height'), 10) / 2);
-                player2.setX(width / 8 - parseInt(player1.getComputedStyle('width'), 10) / 2);
-                player3.setStyle('display', 'block');
-                player3.removeClass('vertical');
-                player3.setY(height / 8 - parseInt(player1.getComputedStyle('height'), 10) / 2);
-                player3.setX(width / 2 - parseInt(player1.getComputedStyle('width'), 10) / 2);
-                player4.setStyle('display', 'block');
-                player4.addClass('vertical');
-                player4.setY(height / 8 * 5 - parseInt(player1.getComputedStyle('height'), 10) / 2);
-                player4.setX(width / 8 * 7 - parseInt(player1.getComputedStyle('width'), 10) / 2);
-                player5.setStyle('display', 'none');
+                position_left(player2);
+                position_topLeft(player3);
+                position_topRight(player4);
+                position_right(player5);
             }
             
         });
     };
 
-    YUI().use('event-resize', function (Y) {
-        Y.on('windowresize', function () { layout(3); });
+    YUI().use('event-base', 'event-resize', 'node', function (Y) {
+        Y.on('domready', function () {
+
+            var splash = Y.one('#splash');
+            var newgame = Y.one('#new_game');
+            var gamelist = Y.one('#game_list');
+            var password = Y.one('#password');
+            var quit = Y.one('#menu_quit');
+            var rules = Y.one('#menu_rules');
+            var about = Y.one('#menu_about');
+
+            splash.setStyle('display', 'block');
+
+            var show_pane = function (pane) {
+                var width = $(window).width();
+                var height = $(window).height();
+                pane.setStyle('display', 'block');
+                pane.setY(height / 2 - parseInt(pane.getComputedStyle('height'), 10) / 2);
+                pane.setX(width / 2 - parseInt(pane.getComputedStyle('width'), 10) / 2);
+            };
+
+            var hide_pane = function (pane) {
+                pane.setStyle('display', 'none');
+            };
+
+            splash.one('#splash_new_game').on('click', function(e) {
+                hide_pane(splash);
+                show_pane(newgame);
+                e.preventDefault();
+                e.stopPropagation();
+            });
+
+            splash.one('#splash_join_game').on('click', function(e) {
+                hide_pane(splash);
+                show_pane(gamelist);
+                // TODO Subscribe to game list events
+                e.preventDefault();
+                e.stopPropagation();
+            });
+
+            newgame.one('#new_game_cancel').on('click', function(e) {
+                hide_pane(newgame);
+                show_pane(splash);
+                e.preventDefault();
+                e.stopPropagation();
+            });
+            newgame.one('#new_game_create').on('click', function(e) {
+                // TODO trigger game creation (after field check)
+                // Then jump to game in progress
+                hide_pane(newgame);
+                e.preventDefault();
+                e.stopPropagation();
+            });
+
+            gamelist.one('#game_list_cancel').on('click', function(e) {
+                hide_pane(gamelist);
+                show_pane(splash);
+                e.preventDefault();
+                e.stopPropagation();
+            });
+            gamelist.one('#game_list_join').on('click', function(e) {
+                // TODO attempt to join game in question, show password dialog if needed
+                // Then jump to game in progress
+                // Unsubscribe from game list events
+                hide_pane(gamelist);
+                show_pane(password);
+                e.preventDefault();
+                e.stopPropagation();
+            });
+
+            password.one('#password_cancel').on('click', function(e) {
+                hide_pane(password);
+                show_pane(gamelist);
+                e.preventDefault();
+                e.stopPropagation();
+            });
+            password.one('#password_enter').on('click', function(e) {
+                hide_pane(password);
+                // TODO if password good, jump to game, else go back to game list
+                e.preventDefault();
+                e.stopPropagation();
+            });
+
+            quit.on('click', function(e) {
+                // TODO - end game in progress (leave if necessary)
+                show_pane(splash);
+                e.preventDefault();
+                e.stopPropagation();
+            });
+
+            about.on('click', function(e) {
+                var pane = Y.one('#panel_about');
+                show_pane(pane);
+                pane.one('#panel_about_close').on('click', function(e) {
+                    hide_pane(pane);
+                    e.preventDefault();
+                    e.stopPropagation();
+                });
+                e.preventDefault();
+                e.stopPropagation();
+            });
+
+            rules.on('click', function(e) {
+                var pane = Y.one('#panel_rules');
+                show_pane(pane);
+                pane.one('#panel_rules_close').on('click', function(e) {
+                    hide_pane(pane);
+                    e.preventDefault();
+                    e.stopPropagation();
+                });
+                e.preventDefault();
+                e.stopPropagation();
+            });
+
+            Y.on('windowresize', function () {
+                layout(3);
+            });
+
+            show_pane(splash);
+            layout(5);
+        });
     });
 
-    layout(3);
 </script>
 
 </head>
 <body>
-<ul id="menu">
-    <li class="begin"><a href="">Quit game</a></li>
-    <li><a href="">Rules</a></li>
-    <li class="end"><a href="">About</a></li>
-</ul>
-
-<div id="splash">
-    <div class="yui3-widget-hd">Hanabi</div>
-    <div class="yui3-widget-bd">
+<div class="panel" id="splash">
+    <h1>Hanabi</h1>
+    <div>
         <form>
-            <button id="new_game">New Game</button>
-            <button id="join_game">Join Game</button>
+            <button id="splash_new_game">New Game</button>
+            <button id="splash_join_game">Join Game</button>
         </form>
     </div>
-    <div class="yui3-widget-ft"></div>
 </div>
 
-<div id="new_game">
-    <div class="yui3-widget-hd">New Game</div>
-    <div class="yui3-widget-bd">
+<div class="panel" id="new_game">
+    <h1>New Game</h1>
+    <div>
         <form>
-            <input type="text" id="new_game_name" />
-            <input type="text" id="new_game_password" />
+            <div>
+                <label for="new_game_name">Game name:</label>
+                <input type="text" id="new_game_name" />
+            </div>
+            <div>
+                <label for="new_game_password">Password:</label>
+                <input type="password" id="new_game_password" />
+            </div>
             <button id="new_game_cancel">Cancel</button>
             <button id="new_game_create">Create Game</button>
         </form>
     </div>
-    <div class="yui3-widget-ft"></div>
-<h1>New Game</h1>
 </div>
 
-<div id="game_list">
-    <div class="yui3-widget-hd">Games in progress</div>
-    <div class="yui3-widget-bd">
+<div class="panel" id="game_list">
+    <h1>Games in progress</h1>
+    <div>
         List of games...
         <form>
             <button id="game_list_cancel">Cancel</button>
             <button id="game_list_join">Join</button>
         </form>
     </div>
-    <div class="yui3-widget-ft"></div>
 </div>
 
-<div id="password">
-    <div class="yui3-widget-hd">Password required</div>
-    <div class="yui3-widget-bd">
+<div class="panel" id="password">
+    <h1>Password required</h1>
+    <div>
         <form>
-            <input type="text" />
+            <input type="password" />
             <button id="password_cancel">Cancel</button>
             <button id="password_enter">Submit</button>
         </form>
     </div>
-    <div class="yui3-widget-ft"></div>
+</div>
+
+<ul id="menu">
+    <li class="begin"><a id="menu_quit" href="">Quit game</a></li>
+    <li><a id="menu_rules" href="">Rules</a></li>
+    <li class="end"><a id="menu_about" href="">About</a></li>
+</ul>
+
+<div class="panel" id="panel_rules">
+    <h1>Rules</h1>
+    <div>
+        Rules text goes here.
+    </div>
+    <div>
+        <form>
+            <button id="panel_rules_close">Close</button>
+        </form>
+    </div>
+</div>
+
+<div class="panel" id="panel_about">
+    <h1>About</h1>
+    <div>
+        About text goes here.
+    </div>
+    <div>
+        <form>
+            <button id="panel_about_close">Close</button>
+        </form>
+    </div>
 </div>
 
 <div class="gameboard" id="gameboard">
@@ -201,7 +363,8 @@
     <div class="card yellow" id="c4">4</div>
     <div class="card white" id="c5">5</div>-->
 
-    <div class="player" id="player1">
+    <div class="player horizontal" id="player1">
+        <h1>Player 1 (you)</h1>
         <div class="slot" id="player1_slot1"></div>
         <div class="slot" id="player1_slot2"></div>
         <div class="slot" id="player1_slot3"></div>
@@ -209,6 +372,7 @@
         <div class="slot" id="player1_slot5"></div>
     </div>
     <div class="player" id="player2">
+        <h1>Player 2</h1>
         <div class="slot" id="player2_slot1"></div>
         <div class="slot" id="player2_slot2"></div>
         <div class="slot" id="player2_slot3"></div>
@@ -216,6 +380,7 @@
         <div class="slot" id="player2_slot5"></div>
     </div>
     <div class="player" id="player3">
+        <h1>Player 3</h1>
         <div class="slot" id="player3_slot1"></div>
         <div class="slot" id="player3_slot2"></div>
         <div class="slot" id="player3_slot3"></div>
@@ -223,6 +388,7 @@
         <div class="slot" id="player3_slot5"></div>
     </div>
     <div class="player" id="player4">
+        <h1>Player 4</h1>
         <div class="slot" id="player4_slot1"></div>
         <div class="slot" id="player4_slot2"></div>
         <div class="slot" id="player4_slot3"></div>
@@ -230,6 +396,7 @@
         <div class="slot" id="player4_slot5"></div>
     </div>
     <div class="player" id="player5">
+        <h1>Player 5</h1>
         <div class="slot" id="player5_slot1"></div>
         <div class="slot" id="player5_slot2"></div>
         <div class="slot" id="player5_slot3"></div>
@@ -237,36 +404,38 @@
         <div class="slot" id="player5_slot5"></div>
     </div>
 
-    <div id="fireworks">
-        <div class="slot" id="firework_red"></div>
-        <div class="slot" id="firework_blue"></div>
-        <div class="slot" id="firework_green"></div>
-        <div class="slot" id="firework_yellow"></div>
-        <div class="slot" id="firework_white"></div>
-    </div>
-
     <div id="board">
-        <div class="slot" id="draw"></div>
-
-        <div id="clues">
-            <div class="clue token" id="clue_token_1"></div>
-            <div class="clue token" id="clue_token_2"></div>
-            <div class="clue token" id="clue_token_3"></div>
-            <div class="clue token endline" id="clue_token_4"></div>
-            <div class="clue token" id="clue_token_5"></div>
-            <div class="clue token" id="clue_token_6"></div>
-            <div class="clue token endline" id="clue_token_7"></div>
-            <div class="clue token" id="clue_token_8"></div>
-            <div class="clue token" id="clue_token_9"></div>
+        <div id="fireworks">
+            <div class="slot" id="firework_red"></div>
+            <div class="slot" id="firework_blue"></div>
+            <div class="slot" id="firework_green"></div>
+            <div class="slot" id="firework_yellow"></div>
+            <div class="slot" id="firework_white"></div>
         </div>
 
-        <div id="lives">
-            <div class="life token" id="life_token_1"></div>
-            <div class="life token" id="life_token_2"></div>
-            <div class="life token" id="life_token_3"></div>
-        </div>
+        <div id="gubbins">
+            <div class="slot" id="draw"></div>
 
-        <div class="slot" id="discard"></div>
+            <div id="clues">
+                <div class="clue token" id="clue_token_1"></div>
+                <div class="clue token" id="clue_token_2"></div>
+                <div class="clue token" id="clue_token_3"></div>
+                <div class="clue token endline" id="clue_token_4"></div>
+                <div class="clue token" id="clue_token_5"></div>
+                <div class="clue token" id="clue_token_6"></div>
+                <div class="clue token endline" id="clue_token_7"></div>
+                <div class="clue token" id="clue_token_8"></div>
+                <div class="clue token" id="clue_token_9"></div>
+            </div>
+
+            <div id="lives">
+                <div class="life token" id="life_token_1"></div>
+                <div class="life token" id="life_token_2"></div>
+                <div class="life token" id="life_token_3"></div>
+            </div>
+
+            <div class="slot" id="discard"></div>
+        </div>
     </div>
 
 </div>
