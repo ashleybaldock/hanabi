@@ -1,9 +1,9 @@
 var express = require('express')
   , app = express()
-  , server = require('http').createServer(app)
+  , server = exports.server = require('http').createServer(app)
   , io = require('socket.io').listen(server);
 
-server.listen(3000);
+server.listen(process.env.PORT);
 
 app.set('trust proxy', true);
 app.use('/static', express.static(__dirname + '/public'));
@@ -23,4 +23,30 @@ io.sockets.on('connection', function (socket) {
             socket.emit('setGameSessionCookie', 'testing1234');
         }
     });
+
+    // Subscribe to notifications about the list of available games
+    socket.on('subscribeGameList', function (data, callback) {
+        socket.join('gamelist');
+    });
+
+    socket.on('unsubscribeGameList', function (data, callback) {
+        socket.leave('gamelist');
+    });
+
+    socket.on('newGame', function (data, callback) {
+        if (!data || typeof data !== typeof {}) { callback("Invalid data"); return; }
+        if (!data.name) { callback("Invalid data"); return; }
+        if (!data.password) { callback("Invalid data"); return; }
+        if (!data.playerCount) { callback("Invalid data"); return; }
+
+        // Using GameListingProvider create and persist a new game listing
+
+        callback();
+    });
+
+    socket.on('listGames', function (data, callback) {
+        // Get a list of active games from GameListingProvider and send back to client in callback
+        callback();
+    });
 });
+
