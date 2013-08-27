@@ -1,8 +1,11 @@
+In lobby
 create a new game, setting an optional password, number of players and game name
 View a list of games in progress, with details of name, whether a password is required, max number of players and current number of players
-join a game in progress, optionally entering the game's password
+    Receive live updates of new games as they are created/their status is updated
+join a game that has yet to begin, optionally entering the game's password
+leave a game that has yet to begin, allowing someone else to join
 
-must be informed of required technologies (javascript/cookies) if they are not enabled
+be informed of required technologies (javascript/cookies) if they are not enabled
 
 In game
 Re-join a game automatically if browser is closed or connection lost
@@ -32,6 +35,7 @@ informed when the game has ended
 offered option to start new game with same players
 offered option to quit
 
+On server
 Game play sequence recorded with game info for future analysis
 List of historical games kept
 

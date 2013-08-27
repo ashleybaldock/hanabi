@@ -41,6 +41,9 @@ io.sockets.on('connection', function (socket) {
 
         // Using GameListingProvider create and persist a new game listing
 
+        // Send a notification indicating that this game has been created to
+        // all clients subscribing to game list events
+
         callback();
     });
 
