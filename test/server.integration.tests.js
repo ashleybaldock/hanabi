@@ -62,6 +62,29 @@ suite('server.js', function() {
         test('should be able to call listGames', function(done) {
             client1.emit('listGames', null, done);
         });
+    });
 
+    suite.skip('newGame', function () {
+        var client1, client2, client3;
+
+        setup(function() {
+            client1 = io.connect(socketURL, options);
+        });
+
+        test('should create new game which can be retrieved using listGames', function(done) {
+            client1.emit('newGame', {
+                name: 'testGame',
+                password: 'testPassword',
+                playerCount: 2
+            }, function (err) {
+                client1.emit('listGames', null, function (data) {
+                    expect(data).to.be.an('array');
+                    expect(data.length).to.be(1);
+                    expect(data[0].name).to.be('testGame');
+                    expect(data[0].playerCount).to.be(2);
+                    done();
+                });
+            });
+        });
     });
 });
