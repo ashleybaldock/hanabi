@@ -2,6 +2,7 @@ var expect = require('expect.js');
 
 var memoryGameListingProvider = require('../lib/MemoryGameListingProvider.js');
 var mongoDBGameListingProvider = require('../lib/MongoDBGameListingProvider.js');
+var dbConnectionString = process.env.DBCONNECTIONSTRING;
 
 var sut;
 
@@ -32,10 +33,10 @@ suite('MemoryGameListingProvider', function() {
     suite('contract', contract_tests);
 });
 
-suite.skip('MongoDBGameListingProvider', function() {
+suite('MongoDBGameListingProvider', function() {
 
     setup(function() {
-        sut = new mongoDBGameListingProvider.GameListingProvider("");
+        sut = new mongoDBGameListingProvider.GameListingProvider(dbConnectionString);
     });
 
     suite('contract', contract_tests);
