@@ -3,7 +3,7 @@ var express = require('express')
   , server = exports.server = require('http').createServer(app)
   , io = require('socket.io').listen(server);
 
-var socketHandlers = require('./lib/socket.handlers.js');
+var SocketHandler = require('./lib/socket.handlers.js').SocketHandler;
 
 server.listen(process.env.PORT);
 
@@ -15,6 +15,7 @@ app.get('/', function (req, res) {
 });
 
 io.sockets.on('connection', function (socket) {
+    var handler = new SocketHandler(socket);
 
     socket.on('routeMe', function (data) {
         if (data !== null) {
@@ -35,7 +36,7 @@ io.sockets.on('connection', function (socket) {
         socket.leave('gamelist');
     });
 
-    socket.on('newGame', function (data, callback) { socketHandlers.newGame(data, callback); });
+    socket.on('newGame', function (data, callback) { handler.newGame(data, callback) });
 
     socket.on('listGames', function (data, callback) {
         // Get a list of active games from GameListingProvider and send back to client in callback
