@@ -12,10 +12,9 @@ socket.on('clearGameSessionCookie', function (data) {
     $.removeCookie('game_session');
 });
 
-var server_new_game = function (name, password, playerCount) {
+var server_new_game = function (name, playerCount) {
     socket.emit('newGame', {
         'name': name,
-        'password': password,
         'player_count': playerCount
     });
 };
@@ -144,7 +143,6 @@ YUI().use('event-base', 'event-resize', 'node', function (Y) {
         var splash = Y.one('#splash');
         var newgame = Y.one('#new_game');
         var gamelist = Y.one('#game_list');
-        var password = Y.one('#password');
         var quit = Y.one('#menu_quit');
         var rules = Y.one('#menu_rules');
         var about = Y.one('#menu_about');
@@ -199,24 +197,10 @@ YUI().use('event-base', 'event-resize', 'node', function (Y) {
             e.stopPropagation();
         });
         gamelist.one('#game_list_join').on('click', function(e) {
-            // TODO attempt to join game in question, show password dialog if needed
+            // TODO attempt to join game in question
             // Then jump to game in progress
             // Unsubscribe from game list events
             hide_pane(gamelist);
-            show_pane(password);
-            e.preventDefault();
-            e.stopPropagation();
-        });
-
-        password.one('#password_cancel').on('click', function(e) {
-            hide_pane(password);
-            show_pane(gamelist);
-            e.preventDefault();
-            e.stopPropagation();
-        });
-        password.one('#password_enter').on('click', function(e) {
-            hide_pane(password);
-            // TODO if password good, jump to game, else go back to game list
             e.preventDefault();
             e.stopPropagation();
         });

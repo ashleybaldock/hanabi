@@ -1,8 +1,8 @@
 In lobby
-create a new game, setting an optional password, number of players and game name
-View a list of games in progress, with details of name, whether a password is required, max number of players and current number of players
+create a new game, setting number of players and game name
+View a list of games in progress, with details of name, max number of players and current number of players
     Receive live updates of new games as they are created/their status is updated
-join a game that has yet to begin, optionally entering the game's password
+join a game that has yet to begin
 leave a game that has yet to begin, allowing someone else to join
 
 be informed of required technologies (javascript/cookies) if they are not enabled
