@@ -4,6 +4,8 @@ var express = require('express')
   , io = require('socket.io').listen(server);
 
 var SocketHandler = require('./lib/socket.handlers.js').SocketHandler;
+var gameListingProvider = new require('./lib/MemoryGameListingProvider.js').GameListingProvider();
+var GameListing = require('./lib/GameListing.js').GameListing;
 
 server.listen(process.env.PORT);
 
@@ -15,7 +17,7 @@ app.get('/', function (req, res) {
 });
 
 io.sockets.on('connection', function (socket) {
-    var handler = new SocketHandler(socket);
+    var handler = new SocketHandler(socket, gameListingProvider, GameListing);
 
     socket.on('routeMe', function (data) {
         if (data !== null) {
