@@ -4,7 +4,7 @@ var express = require('express')
   , io = require('socket.io').listen(server);
 
 var SocketHandler = require('./lib/socket.handlers.js').SocketHandler;
-var gameListingProvider = new require('./lib/MemoryGameListingProvider.js').GameListingProvider();
+var gameListingProvider = new (require('./lib/MemoryGameListingProvider.js').GameListingProvider)();
 var GameListing = require('./lib/GameListing.js').GameListing;
 
 server.listen(process.env.PORT);

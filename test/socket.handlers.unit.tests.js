@@ -78,27 +78,28 @@ suite('SocketHandler', function () {
     });
 
     suite('newGame()', function () {
+        var newGameListing = new GameListing('testName', 2);
+        var data = {name: 'testName', playerCount: 2};
+
+        setup(function () {
+            mockGameListingConstructor.withArgs('testName', 2).returns(newGameListing);
+        });
+
         suite('collaboration with GameListingConstructor', function () {
             test('should create new GameListing using injected constructor', function () {
-                mockGameListingConstructor.withArgs('testName', 2).returns({name: 'testName', playerCount: 2});
 
-                sut.newGame({name: 'testName', playerCount: 2}, function () {});
+                sut.newGame(data, function () {});
 
                 expect(mockGameListingConstructor.calledWithNew()).to.be.ok();
                 expect(mockGameListingConstructor.calledWithExactly('testName', 2)).to.be.ok();
             });
         });
-        suite('collaboration with Socket', function () {
-            test('should call emit once', function () {
-                mockSocket.expects('emit').once().withArgs('blah');
+        suite('collaboration with GameListingProvider', function () {
+            test('should call save() with new GameListing', function (done) {
+                mockGameListingProvider.expects('save').once().withArgs(newGameListing).callsArgWith(1, newGameListing);
+                sut.newGame(data, done);
 
-                sut.newGame({
-                    name: 'testGame',
-                    password: 'testPassword',
-                    playerCount: 2
-                }, function () {});
-
-                mockSocket.verify();
+                mockGameListingProvider.verify();
             });
         });
     });
