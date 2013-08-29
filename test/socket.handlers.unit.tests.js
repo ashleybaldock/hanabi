@@ -1,6 +1,8 @@
 var expect = require('expect.js');
 var sinon = require('sinon');
 var SocketHandler = require('../lib/socket.handlers.js').SocketHandler;
+var GameListingProvider = require('../lib/MemoryGameListingProvider.js').GameListingProvider;
+var GameListing = require('../lib/GameListing.js').GameListing;
 
 // Methods our Socket mock should define (that we use)
 var sock = {
@@ -10,11 +12,12 @@ var sock = {
 };
 
 suite('SocketHandler', function () {
-    var sut, mockSocket;
+    var sut, mockSocket, mockGameListingProvider;
 
     setup(function () {
         mockSocket = sinon.mock(sock);
-        sut = new SocketHandler(mockSocket.object);
+        mockGameListingProvider = sinon.mock(new GameListingProvider());
+        sut = new SocketHandler(mockSocket.object, mockGameListingProvider.object);
     });
 
     suite('contract', function () {
@@ -32,6 +35,16 @@ suite('SocketHandler', function () {
 
         test('should define unsubscribeGameList() method', function () {
             expect(sut.unsubscribeGameList).to.be.a('function');
+        });
+    });
+
+    suite('constructor', function () {
+        test('should set own property socket to injected object', function () {
+            expect(sut.socket).to.be(mockSocket.object);
+        });
+
+        test('should set own property gameListingProvider to injected object', function () {
+            expect(sut.gameListingProvider).to.be(mockGameListingProvider.object);
         });
     });
 
@@ -64,4 +77,19 @@ suite('SocketHandler', function () {
             mockSocket.verify();
         });
     });
+
+    suite('collaboration with GameListingProvider', function () {
+        test('listGames() should execute callback with games from provider', function (done) {
+            var expectedResult = new GameListing('testing', 2);
+            var check = function (result) {
+                expect(result).to.be(expectedResult);
+                done();
+            };
+            mockGameListingProvider.expects('findActive').once().withArgs(check).callsArgWith(0, expectedResult);
+            sut.listGames(null, check);
+
+            mockGameListingProvider.verify();
+        });
+    });
+
 });
