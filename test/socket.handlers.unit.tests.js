@@ -8,14 +8,23 @@ var GameListing = require('../lib/GameListing.js').GameListing;
 var sock = {
     emit: function (data) {},
     join: function (list) {},
-    leave: function (list) {}
+    leave: function (list) {},
+    to: function (list) {},
+    emit: function (ev, data) {},
+    flags: {
+        broadcast: false
+    }
 };
+sock.__defineGetter__('broadcast', function () {
+    return this;
+});
 
 suite('SocketHandler', function () {
     var sut, mockSocket, mockGameListingProvider, mockGameListingConstructor;
 
     setup(function () {
         mockSocket = sinon.mock(sock);
+        mockSocket.object.__defineGetter__('broadcast', function () { this.flags.broadcast = true; return this; });
         mockGameListingProvider = sinon.mock(new GameListingProvider());
         mockGameListingConstructor = sinon.stub();
         sut = new SocketHandler(mockSocket.object, mockGameListingProvider.object, mockGameListingConstructor);
@@ -54,6 +63,10 @@ suite('SocketHandler', function () {
     });
 
     suite('subscribeGameList()', function () {
+        test('should execute callback', function (done) {
+            sut.subscribeGameList(null, done);
+        });
+
         suite('collaboration with Socket', function () {
             test('should call join with gamelist', function () {
                 mockSocket.expects('join').once().withArgs('gamelist');
@@ -66,6 +79,10 @@ suite('SocketHandler', function () {
     });
 
     suite('unsubscribeGameList()', function () {
+        test('should execute callback', function (done) {
+            sut.unsubscribeGameList(null, done);
+        });
+
         suite('collaboration with Socket', function () {
             test('should call leave with gamelist', function () {
                 mockSocket.expects('leave').once().withArgs('gamelist');
@@ -82,24 +99,34 @@ suite('SocketHandler', function () {
         var data = {name: 'testName', playerCount: 2};
 
         setup(function () {
+            mockSocket.expects('to').once().withArgs('gamelist').returns(mockSocket.object);
+            mockSocket.expects('emit').once().withArgs('newGameCreated', newGameListing);
+            mockGameListingProvider.expects('save').once().withArgs(newGameListing).callsArgWith(1, newGameListing);
             mockGameListingConstructor.withArgs('testName', 2).returns(newGameListing);
         });
 
-        suite('collaboration with GameListingConstructor', function () {
+        suite('collaboration', function () {
             test('should create new GameListing using injected constructor', function () {
-
                 sut.newGame(data, function () {});
 
                 expect(mockGameListingConstructor.calledWithNew()).to.be.ok();
                 expect(mockGameListingConstructor.calledWithExactly('testName', 2)).to.be.ok();
+
+                mockGameListingProvider.restore();
+                mockSocket.restore();
             });
-        });
-        suite('collaboration with GameListingProvider', function () {
-            test('should call save() with new GameListing', function (done) {
-                mockGameListingProvider.expects('save').once().withArgs(newGameListing).callsArgWith(1, newGameListing);
+            test('should call save() on created GameListing', function (done) {
                 sut.newGame(data, done);
 
                 mockGameListingProvider.verify();
+                mockSocket.restore();
+            });
+            test('should call broadcast.to().emit() on injected socket', function (done) {
+                sut.newGame(data, done);
+
+                mockGameListingProvider.restore();
+                mockSocket.verify();
+                expect(mockSocket.object.flags.broadcast).to.be(true);
             });
         });
     });

@@ -30,13 +30,9 @@ io.sockets.on('connection', function (socket) {
     });
 
     // Subscribe to notifications about the list of available games
-    socket.on('subscribeGameList', function (data, callback) {
-        socket.join('gamelist');
-    });
+    socket.on('subscribeGameList', function (data, callback) { handler.subscribeGameList(data, callback) });
 
-    socket.on('unsubscribeGameList', function (data, callback) {
-        socket.leave('gamelist');
-    });
+    socket.on('unsubscribeGameList', function (data, callback) { handler.unsubscribeGameList(data, callback) });
 
     socket.on('newGame', function (data, callback) { handler.newGame(data, callback) });
 

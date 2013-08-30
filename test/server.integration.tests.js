@@ -39,22 +39,22 @@ suite('server.js', function() {
         });
 
         test('newGame should require object with name', function(done) {
-            client1.emit('newGame', {password: '', playerCount: 0}, function (err) {
-                expect(err).to.be("Invalid data");
+            client1.emit('newGame', {playerCount: 0}, function (err) {
+                expect(err).to.be("Invalid data - missing name");
                 done();
             });
         });
 
-        test('newGame should require object with password', function(done) {
+        test('newGame should require object with non-empty name', function(done) {
             client1.emit('newGame', {name: '', playerCount: 0}, function (err) {
-                expect(err).to.be("Invalid data");
+                expect(err).to.be("Invalid data - missing name");
                 done();
             });
         });
 
         test('newGame should require object with playerCount', function(done) {
-            client1.emit('newGame', {name: '', password: ''}, function (err) {
-                expect(err).to.be("Invalid data");
+            client1.emit('newGame', {name: 'test'}, function (err) {
+                expect(err).to.be("Invalid data - missing playerCount");
                 done();
             });
         });
@@ -64,17 +64,40 @@ suite('server.js', function() {
         });
     });
 
-    suite.skip('newGame', function () {
+    suite('newGame', function () {
         var client1, client2, client3;
 
-        setup(function() {
+        setup(function () {
             client1 = io.connect(socketURL, options);
+            client2 = io.connect(socketURL, options);
         });
 
-        test('should create new game which can be retrieved using listGames', function(done) {
+        teardown(function () {
+            client1.disconnect();
+            client2.disconnect();
+        });
+
+        test('should cause client subscribed to game listing notifications to receive newGameCreated event', function (done) {
+            client2.on('newGameCreated', function (data) {
+                console.log('success done');
+                expect(data.name).to.be('testGame');
+                expect(data.playerCount).to.be(2);
+                done();
+            });
+            client2.emit('subscribeGameList', null, function (err) {
+                expect(err).to.be(undefined);
+                client1.emit('newGame', {
+                    name: 'testGame',
+                    playerCount: 2
+                }, function (err2) {
+                    expect(err2).to.be(undefined);
+                });
+            });
+        });
+
+        test.skip('should create new game which can be retrieved using listGames', function(done) {
             client1.emit('newGame', {
                 name: 'testGame',
-                password: 'testPassword',
                 playerCount: 2
             }, function (err) {
                 client1.emit('listGames', null, function (data) {
