@@ -26,7 +26,6 @@ suite('server.js', function() {
         test('should be able to call newGame', function(done) {
             client1.emit('newGame', {
                 name: 'testGame',
-                password: 'testPassword',
                 playerCount: 2
             }, done);
         });
@@ -60,7 +59,9 @@ suite('server.js', function() {
         });
 
         test('should be able to call listGames', function(done) {
-            client1.emit('listGames', null, done);
+            client1.emit('listGames', null, function (data) {
+                done();
+            });
         });
     });
 
@@ -79,7 +80,6 @@ suite('server.js', function() {
 
         test('should cause client subscribed to game listing notifications to receive newGameCreated event', function (done) {
             client2.on('newGameCreated', function (data) {
-                console.log('success done');
                 expect(data.name).to.be('testGame');
                 expect(data.playerCount).to.be(2);
                 done();
@@ -89,23 +89,26 @@ suite('server.js', function() {
                 client1.emit('newGame', {
                     name: 'testGame',
                     playerCount: 2
-                }, function (err2) {
-                    expect(err2).to.be(undefined);
+                }, function (err) {
+                    expect(err).to.be(undefined);
                 });
             });
         });
 
-        test.skip('should create new game which can be retrieved using listGames', function(done) {
-            client1.emit('newGame', {
-                name: 'testGame',
-                playerCount: 2
-            }, function (err) {
-                client1.emit('listGames', null, function (data) {
-                    expect(data).to.be.an('array');
-                    expect(data.length).to.be(1);
-                    expect(data[0].name).to.be('testGame');
-                    expect(data[0].playerCount).to.be(2);
-                    done();
+        test('should create new game which can be retrieved using listGames', function(done) {
+            client1.emit('listGames', null, function (beforedata) {
+                client1.emit('newGame', {
+                    name: 'testGame',
+                    playerCount: 2
+                }, function (err) {
+                    expect(err).to.be(undefined);
+                    client1.emit('listGames', null, function (data) {
+                        expect(data).to.be.an('array');
+                        expect(data.length).to.be(beforedata.length + 1);
+                        expect(data[data.length-1].name).to.be('testGame');
+                        expect(data[data.length-1].playerCount).to.be(2);
+                        done();
+                    });
                 });
             });
         });

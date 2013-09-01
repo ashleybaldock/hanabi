@@ -1,23 +1,39 @@
 var socket = io.connect('http://localhost:3000');
 
+var LocalStorage = {
+//    $.removeCookie('game_session');
+    get_clientId: function () {
+        return $.cookie('client_id');
+    },
+
+    set_clientId: function (id) {
+        $.cookie('client_id', id, { expires: 7 });
+    }
+};
+
 socket.on('connect', function (data) {
     socket.emit('routeMe', $.cookie('game_session'));
 });
 
-socket.on('setGameSessionCookie', function (data) {
-    $.cookie('game_session', data, { expires: 7});
+socket.on('setClientId', function (data) {
 });
 
-socket.on('clearGameSessionCookie', function (data) {
-    $.removeCookie('game_session');
+socket.on('gotoSplash', function (data) {
 });
 
-var server_new_game = function (name, playerCount) {
-    socket.emit('newGame', {
-        'name': name,
-        'player_count': playerCount
-    });
-};
+socket.on('gotoGame', function (data) {
+});
+
+
+// Methods to communicate with the server
+var Server = {
+    new_game: function (name, playerCount) {
+        socket.emit('newGame', {
+            'name': name,
+            'player_count': playerCount
+        });
+    }
+}
 
 
 // Position game board elements based on count of players and current window size

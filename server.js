@@ -19,6 +19,22 @@ app.get('/', function (req, res) {
 io.sockets.on('connection', function (socket) {
     var handler = new SocketHandler(socket, gameListingProvider, GameListing);
 
+    socket.on('subscribeGameList', function (data, callback) {
+        handler.subscribeGameList(data, callback);
+    });
+
+    socket.on('unsubscribeGameList', function (data, callback) {
+        handler.unsubscribeGameList(data, callback);
+    });
+
+    socket.on('newGame', function (data, callback) {
+        handler.newGame(data, callback);
+    });
+
+    socket.on('listGames', function (data, callback) {
+        handler.listGames(data, callback);
+    });
+
     socket.on('routeMe', function (data) {
         if (data !== null) {
             console.log('session cookie set to: ' + data);
@@ -27,18 +43,6 @@ io.sockets.on('connection', function (socket) {
             console.log('session cookie not set, setting');
             socket.emit('setGameSessionCookie', 'testing1234');
         }
-    });
-
-    // Subscribe to notifications about the list of available games
-    socket.on('subscribeGameList', function (data, callback) { handler.subscribeGameList(data, callback) });
-
-    socket.on('unsubscribeGameList', function (data, callback) { handler.unsubscribeGameList(data, callback) });
-
-    socket.on('newGame', function (data, callback) { handler.newGame(data, callback) });
-
-    socket.on('listGames', function (data, callback) {
-        // Get a list of active games from GameListingProvider and send back to client in callback
-        callback();
     });
 });
 
