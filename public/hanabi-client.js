@@ -32,6 +32,8 @@ var Server = {
             'name': name,
             'player_count': playerCount
         });
+    },
+    set_client_name: function (name) {
     }
 }
 

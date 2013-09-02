@@ -1,9 +1,8 @@
 var expect = require('expect.js');
 
-var memoryGameListingProvider = require('../lib/MemoryGameListingProvider.js');
-var mongoDBGameListingProvider = require('../lib/MongoDBGameListingProvider.js');
+var MemoryClientProvider = require('../lib/MemoryClientProvider.js').ClientProvider;
 var dbConnectionString = process.env.DBCONNECTIONSTRING;
-var GameListing = require('../lib/GameListing.js').GameListing;
+var Client = require('../lib/Client.js').Client;
 
 var sut;
 
@@ -20,32 +19,20 @@ var contract_tests = function (done) {
         });
     });
 
-    test('should define findActive() method', function() {
-        expect(sut.findActive).to.be.a('function');
+    test('should define findById() method', function() {
+        expect(sut.findById).to.be.a('function');
     });
 
-    test('findActive() should throw error if callback not a function', function() {
+    test('findById() should throw error if callback not a function', function() {
         expect(function () {
-            sut.findActive(null);
+            sut.findById(null);
         }).to.throwException(function (ex) {
             expect(ex).to.be('callback is not a function!');
         });
     });
 
-    test('should define findActiveByClientId() method', function() {
-        expect(sut.findActiveByClientId).to.be.a('function');
-    });
-
-    test('findActiveByClientId() should throw error if callback not a function', function() {
-        expect(function () {
-            sut.findActiveByClientId(null);
-        }).to.throwException(function (ex) {
-            expect(ex).to.be('callback is not a function!');
-        });
-    });
-
-    test('findActiveByClientId() should execute callback', function (done) {
-        sut.findActiveByClientId(0, function () { done() });
+    test('findById() should execute callback', function (done) {
+        sut.findById(0, done);
     });
 
     test('should define save() method', function() {
@@ -79,7 +66,7 @@ var contract_tests = function (done) {
 
 var persist_tests = function (done) {
     test('removeById() should remove previously created item', function (done) {
-        sut.save(new GameListing('test1', 2), function (newListing) {
+        sut.save(new Client(), function (newListing) {
             expect(newListing.id).to.be(0);
             sut.findAll(function (result) {
                 expect(result.length).to.be(1);
@@ -94,10 +81,10 @@ var persist_tests = function (done) {
     });
 };
 
-suite('MemoryGameListingProvider', function() {
+suite('MemoryClientProvider', function() {
 
     setup(function() {
-        sut = new memoryGameListingProvider.GameListingProvider();
+        sut = new MemoryClientProvider();
     });
 
     suite('contract', contract_tests);
@@ -105,11 +92,3 @@ suite('MemoryGameListingProvider', function() {
     suite('persist tests', persist_tests);
 });
 
-suite.skip('MongoDBGameListingProvider', function() {
-
-    setup(function() {
-        sut = new mongoDBGameListingProvider.GameListingProvider(dbConnectionString);
-    });
-
-    suite('contract', contract_tests);
-});

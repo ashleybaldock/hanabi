@@ -36,13 +36,7 @@ io.sockets.on('connection', function (socket) {
     });
 
     socket.on('routeMe', function (data) {
-        if (data !== null) {
-            console.log('session cookie set to: ' + data);
-            socket.emit('clearGameSessionCookie');
-        } else {
-            console.log('session cookie not set, setting');
-            socket.emit('setGameSessionCookie', 'testing1234');
-        }
+        handler.routeClient(data, callback);
     });
 });
 

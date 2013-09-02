@@ -2,7 +2,9 @@ var expect = require('expect.js');
 var sinon = require('sinon');
 var SocketHandler = require('../lib/socket.handlers.js').SocketHandler;
 var GameListingProvider = require('../lib/MemoryGameListingProvider.js').GameListingProvider;
+var ClientProvider = require('../lib/MemoryClientProvider.js').ClientProvider;
 var GameListing = require('../lib/GameListing.js').GameListing;
+var Client = require('../lib/Client.js').Client;
 
 // Methods our Socket mock should define (that we use)
 var sock = {
@@ -20,14 +22,21 @@ sock.__defineGetter__('broadcast', function () {
 });
 
 suite('SocketHandler', function () {
-    var sut, mockSocket, mockGameListingProvider, mockGameListingConstructor;
+    var sut
+      , mockSocket
+      , mockGameListingProvider
+      , mockGameListingConstructor
+      , mockClientProvider
+      , mockClientConstructor;
 
     setup(function () {
         mockSocket = sinon.mock(sock);
         mockSocket.object.__defineGetter__('broadcast', function () { this.flags.broadcast = true; return this; });
         mockGameListingProvider = sinon.mock(new GameListingProvider());
+        mockClientProvider = sinon.mock(new ClientProvider());
         mockGameListingConstructor = sinon.stub();
-        sut = new SocketHandler(mockSocket.object, mockGameListingProvider.object, mockGameListingConstructor);
+        mockClientConstructor = sinon.stub();
+        sut = new SocketHandler(mockSocket.object, mockGameListingProvider.object, mockGameListingConstructor, mockClientProvider.object, mockClientConstructor);
     });
 
     suite('contract', function () {
@@ -46,6 +55,10 @@ suite('SocketHandler', function () {
         test('should define unsubscribeGameList() method', function () {
             expect(sut.unsubscribeGameList).to.be.a('function');
         });
+
+        test('should define routeClient() method', function () {
+            expect(sut.routeClient).to.be.a('function');
+        });
     });
 
     suite('constructor', function () {
@@ -59,6 +72,14 @@ suite('SocketHandler', function () {
 
         test('should set own property GameListingConstructor to injected object', function () {
             expect(sut.GameListingConstructor).to.be(mockGameListingConstructor);
+        });
+
+        test('should set own property clientProvider to injected object', function () {
+            expect(sut.clientProvider).to.be(mockClientProvider.object);
+        });
+
+        test('should set own property ClientConstructor to injected object', function () {
+            expect(sut.ClientConstructor).to.be(mockClientConstructor);
         });
     });
 
@@ -105,6 +126,15 @@ suite('SocketHandler', function () {
             mockGameListingConstructor.withArgs('testName', 2).returns(newGameListing);
         });
 
+        teardown(function () {
+            mockGameListingProvider.restore();
+            mockSocket.restore();
+        });
+
+        test('should execute callback', function (done) {
+            sut.newGame(null, function () { done() });
+        });
+
         suite('collaboration', function () {
             test('should create new GameListing using injected constructor', function () {
                 sut.newGame(data, function () {});
@@ -132,6 +162,10 @@ suite('SocketHandler', function () {
     });
 
     suite('listGames()', function () {
+        test('should execute callback', function (done) {
+            sut.listGames(null, function () { done() });
+        });
+
         suite('collaboration with GameListingProvider', function () {
             test('should execute callback with games from provider', function (done) {
                 var expectedResult = new GameListing('testing', 2);
@@ -147,4 +181,82 @@ suite('SocketHandler', function () {
         });
     });
 
+    suite('routeClient()', function () {
+        setup(function () {
+        });
+
+        teardown(function () {
+        });
+
+        test('should execute callback', function (done) {
+            sut.routeClient(null, function () { done() });
+        });
+
+        suite('collaboration', function () {
+            var testId = 1;
+            var activeGameId = 1;
+            var newClient = new Client();
+            var existingClient = new Client();
+            existingClient.id = testId;
+            var activeGame = new GameListing('testGame', 2);
+            activeGame.id = activeGameId;
+            activeGame.players[1] = existingClient.id;
+            activeGame.state = 'playing';
+
+            test('client id not found', function (done) {
+                mockClientProvider.expects('findById').once().withArgs(testId).callsArgWith(1, undefined);
+                mockClientConstructor.returns(newClient);
+                mockClientProvider.expects('save').once().withArgs(newClient).callsArgWith(1, {id: testId});
+                mockSocket.expects('emit').once().withArgs('setClientId', testId);
+                mockSocket.expects('emit').once().withArgs('gotoSplash', null);
+
+                sut.routeClient(testId, function () {
+                    expect(mockClientConstructor.calledWithNew()).to.be.ok();
+                    expect(mockClientConstructor.calledWithExactly()).to.be.ok();
+
+                    mockClientProvider.verify();
+                    mockSocket.verify();
+                    done();
+                });
+            });
+
+            test('client id found, no active game associated', function (done) {
+                mockClientProvider.expects('findById').once().withArgs(testId).callsArgWith(1, existingClient);
+                mockGameListingProvider.expects('findActiveByClientId').once().withArgs(testId).callsArgWith(1, []);
+                mockSocket.expects('emit').once().withArgs('gotoSplash', null);
+
+                sut.routeClient(testId, function () {
+                    mockClientProvider.verify();
+                    mockGameListingProvider.verify();
+                    mockSocket.verify();
+                    done();
+                });
+            });
+
+            test('client id found, active game associated', function (done) {
+                mockClientProvider.expects('findById').once().withArgs(testId).callsArgWith(1, existingClient);
+                mockGameListingProvider.expects('findActiveByClientId').once().withArgs(testId).callsArgWith(1, [activeGame]);
+                mockSocket.expects('emit').once().withArgs('gotoGame', activeGame.id);
+
+                sut.routeClient(testId, function () {
+                    mockClientProvider.verify();
+                    mockGameListingProvider.verify();
+                    mockSocket.verify();
+                    done();
+                });
+            });
+
+            test('client id found, multiple active games associated', function () {
+                // This should never happen, but what is the expected behaviour if it does?
+                mockClientProvider.expects('findById').once().withArgs(testId).callsArgWith(1, existingClient);
+                mockGameListingProvider.expects('findActiveByClientId').once().withArgs(testId).callsArgWith(1, [activeGame, activeGame]);
+
+                expect(function () { sut.routeClient(testId, function () {}) }).to.throwException('Multiple active games associated with client id!');
+
+                mockClientProvider.verify();
+                mockGameListingProvider.verify();
+                mockSocket.verify();
+            });
+        });
+    });
 });
