@@ -157,50 +157,39 @@ suite('SocketHandler', function () {
 
     suite('newGame()', function () {
         var newGameListing = new GameListing('testName', 2);
+        var persistedGameListing = new GameListing('testName', 2);
+        persistedGameListing.id = 0;
         var data = {name: 'testName', playerCount: 2};
-
-        setup(function () {
-            mockSocket.expects('to').once().withArgs('gamelist').returns(mockSocket.object);
-            mockSocket.expects('emit').once().withArgs('newGameCreated', newGameListing);
-            mockGameListingProvider.expects('save').once().withArgs(newGameListing).callsArgWith(1, newGameListing);
-            mockGameListingConstructor.withArgs('testName', 2).returns(newGameListing);
-        });
 
         teardown(function () {
             mockGameListingProvider.restore();
             mockSocket.restore();
         });
 
-        test('should execute callback', function (done) {
-            sut.newGame(null, function () { done() });
-        });
-
-        test('should skip callback if not function', function () {
-            sut.newGame(null, null);
+        test('should throw exception if callback not set', function () {
+            expect(function () {
+                sut.newGame(null, null);
+            }).to.throwException('Callback mandatory for newGame call');
         });
 
         suite('collaboration', function () {
-            test('should create new GameListing using injected constructor', function () {
-                sut.newGame(data, function () {});
+            test('should create and persist new GameListing and inform clients via emit and callback', function (done) {
+                mockSocket.expects('to').once().withArgs('gamelist').returns(mockSocket.object);
+                mockSocket.expects('emit').once().withArgs('newGameCreated', persistedGameListing);
+                mockGameListingProvider.expects('save').once().withArgs(newGameListing).callsArgWith(1, persistedGameListing);
+                mockGameListingConstructor.withArgs('testName', 2).returns(newGameListing);
 
-                expect(mockGameListingConstructor.calledWithNew()).to.be.ok();
-                expect(mockGameListingConstructor.calledWithExactly('testName', 2)).to.be.ok();
+                sut.newGame(data, function (result) {
+                    expect(result).to.be.an('object');
+                    expect(mockGameListingConstructor.calledWithNew()).to.be.ok();
+                    expect(mockGameListingConstructor.calledWithExactly('testName', 2)).to.be.ok();
 
-                mockGameListingProvider.restore();
-                mockSocket.restore();
-            });
-            test('should call save() on created GameListing', function (done) {
-                sut.newGame(data, done);
+                    mockGameListingProvider.verify();
+                    mockSocket.verify();
+                    expect(mockSocket.object.flags.broadcast).to.be(true);
 
-                mockGameListingProvider.verify();
-                mockSocket.restore();
-            });
-            test('should call broadcast.to().emit() on injected socket', function (done) {
-                sut.newGame(data, done);
-
-                mockGameListingProvider.restore();
-                mockSocket.verify();
-                expect(mockSocket.object.flags.broadcast).to.be(true);
+                    done();
+                });
             });
         });
     });

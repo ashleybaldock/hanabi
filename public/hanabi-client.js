@@ -267,14 +267,17 @@ YUI().use('event-base', 'event-resize', 'node', function (Y) {
                 console.log('newGame result: ' + result);
                 if (typeof result === 'object') {
                     Server.joinGame(result, function (result) {
+                        // TODO implement joinGame
                         console.log('joinGame result: ' + result);
                         if (result === true) {
                             hide_pane(newgame);
                         } else {
+                            console.log('Error: joinGame call failed with: ' + result);
                             // Error + back to splash
                         }
                     });
                 } else {
+                    console.log('Error: newGame call failed with: ' + result);
                     // Error + back to new game
                 }
             });

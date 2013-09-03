@@ -27,7 +27,9 @@ suite('server.js', function () {
             client1.emit('newGame', {
                 name: 'testGame',
                 playerCount: 2
-            }, done);
+            }, function (result) {
+                done();
+            });
         });
 
         test('newGame should require object', function (done) {
@@ -113,8 +115,8 @@ suite('server.js', function () {
                 client1.emit('newGame', {
                     name: 'testGame',
                     playerCount: 2
-                }, function (err) {
-                    expect(err).to.be(undefined);
+                }, function (result) {
+                    expect(result).to.be.an('object');
                 });
             });
         });
@@ -124,8 +126,8 @@ suite('server.js', function () {
                 client1.emit('newGame', {
                     name: 'testGame',
                     playerCount: 2
-                }, function (err) {
-                    expect(err).to.be(undefined);
+                }, function (result) {
+                    expect(result).to.be.an('object');
                     client1.emit('listGames', null, function (data) {
                         expect(data).to.be.an('array');
                         expect(data.length).to.be(beforedata.length + 1);
