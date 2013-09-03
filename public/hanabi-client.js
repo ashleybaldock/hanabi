@@ -23,7 +23,7 @@ var LocalStorage = {
 };
 
 socket.on('connect', function (data) {
-    socket.emit('routeMe', LocalStorage.get_clientId());
+    socket.emit('routeClient', LocalStorage.get_clientId());
 });
 
 socket.on('setClientId', function (data) {

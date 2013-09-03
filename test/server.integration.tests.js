@@ -3,6 +3,7 @@ var io = require('socket.io-client');
 var HanabiApp = require('../lib/HanabiApp.js').HanabiApp;
 
 var socketURL = 'http://localhost:3001';
+var testPort = 3001;
 
 var options = {
     transports: ['websocket'],
@@ -14,7 +15,7 @@ suite('server.js', function () {
 
     setup(function () {
         console.log('------main setup------');
-        sut = new HanabiApp(3001);
+        sut = new HanabiApp(testPort);
         sut.listen();
     });
 
@@ -85,8 +86,8 @@ suite('server.js', function () {
             });
         });
 
-        test('should be able to call routeMe', function (done) {
-            client1.emit('routeMe', 0, function (data) {
+        test('should be able to call routeClient', function (done) {
+            client1.emit('routeClient', 0, function (data) {
                 done();
             });
         });
@@ -115,6 +116,7 @@ suite('server.js', function () {
         test('should cause client to receive setClientId and gotoSplash events when connecting for the first time', function (done) {
             var id_out = null, gotoSplash = false;
             var check_complete = function () {
+                console.log('checking');
                 if (id_out !== null && gotoSplash) { done() };
             };
             client1.on('setClientId', function (id) {
@@ -154,7 +156,7 @@ suite('server.js', function () {
         });
 
         test('should callback with undefined on success', function (done) {
-            client1.emit('routeMe', {id: null}, function (err) {
+            client1.emit('routeClient', {id: null}, function (err) {
                 client1.emit('joinGame', game, function (err) {
                     expect(err).to.be(undefined);
                     done();
