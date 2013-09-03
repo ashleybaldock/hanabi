@@ -27,13 +27,26 @@ socket.on('gotoGame', function (data) {
 
 // Methods to communicate with the server
 var Server = {
-    new_game: function (name, playerCount) {
+    setClientName: function (name, callback) {
+        socket.emit('setClientName', {
+            id: LocalStorage.get_clientId(),
+            name: name
+        }, callback);
+    },
+    newGame: function (name, playerCount) {
         socket.emit('newGame', {
             'name': name,
             'player_count': playerCount
         });
     },
-    set_client_name: function (name) {
+    subscribeGameList: function (callback) {
+        socket.emit('subscribeGameList', null, callback);
+    },
+    unsubscribeGameList: function (callback) {
+        socket.emit('unsubscribeGameList', null, callback);
+    },
+    listGames: function (callback) {
+        socket.emit('listGames', null, callback);
     }
 }
 

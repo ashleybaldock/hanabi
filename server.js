@@ -5,7 +5,9 @@ var express = require('express')
 
 var SocketHandler = require('./lib/socket.handlers.js').SocketHandler;
 var gameListingProvider = new (require('./lib/MemoryGameListingProvider.js').GameListingProvider)();
+var clientProvider = new (require('./lib/MemoryClientProvider.js').ClientProvider)();
 var GameListing = require('./lib/GameListing.js').GameListing;
+var Client = require('./lib/Client.js').Client;
 
 server.listen(process.env.PORT);
 
@@ -17,7 +19,7 @@ app.get('/', function (req, res) {
 });
 
 io.sockets.on('connection', function (socket) {
-    var handler = new SocketHandler(socket, gameListingProvider, GameListing);
+    var handler = new SocketHandler(socket, gameListingProvider, GameListing, clientProvider, Client);
 
     socket.on('subscribeGameList', function (data, callback) {
         handler.subscribeGameList(data, callback);
@@ -35,8 +37,12 @@ io.sockets.on('connection', function (socket) {
         handler.listGames(data, callback);
     });
 
-    socket.on('routeMe', function (data) {
+    socket.on('routeMe', function (data, callback) {
         handler.routeClient(data, callback);
+    });
+
+    socket.on('setClientName', function (data, callback) {
+        handler.setClientName(data, callback);
     });
 });
 

@@ -8,58 +8,82 @@ var options = {
     'force new connection': true
 };
 
-suite('server.js', function() {
+suite('server.js', function () {
     var sut;
 
-    setup(function() {
+    setup(function () {
         process.env['PORT'] = '3001';
         sut = require('../server.js').server;
     });
 
-    suite('contract', function() {
+    suite('contract', function () {
         var client1, client2, client3;
 
-        setup(function() {
+        setup(function () {
             client1 = io.connect(socketURL, options);
         });
 
-        test('should be able to call newGame', function(done) {
+        test('should be able to call newGame', function (done) {
             client1.emit('newGame', {
                 name: 'testGame',
                 playerCount: 2
             }, done);
         });
 
-        test('newGame should require object', function(done) {
+        test('newGame should require object', function (done) {
             client1.emit('newGame', null, function (err) {
                 expect(err).to.be("Invalid data");
                 done()
             });
         });
 
-        test('newGame should require object with name', function(done) {
+        test('newGame should require object with name', function (done) {
             client1.emit('newGame', {playerCount: 0}, function (err) {
                 expect(err).to.be("Invalid data - missing name");
                 done();
             });
         });
 
-        test('newGame should require object with non-empty name', function(done) {
+        test('newGame should require object with non-empty name', function (done) {
             client1.emit('newGame', {name: '', playerCount: 0}, function (err) {
                 expect(err).to.be("Invalid data - missing name");
                 done();
             });
         });
 
-        test('newGame should require object with playerCount', function(done) {
+        test('newGame should require object with playerCount', function (done) {
             client1.emit('newGame', {name: 'test'}, function (err) {
                 expect(err).to.be("Invalid data - missing playerCount");
                 done();
             });
         });
 
-        test('should be able to call listGames', function(done) {
+        test('should be able to call listGames', function (done) {
             client1.emit('listGames', null, function (data) {
+                done();
+            });
+        });
+
+        test('should be able to call subscribeGameList', function (done) {
+            client1.emit('subscribeGameList', null, function (data) {
+                done();
+            });
+        });
+
+        test('should be able to call unsubscribeGameList', function (done) {
+            client1.emit('unsubscribeGameList', null, function (data) {
+                done();
+            });
+        });
+
+        test('should be able to call routeMe', function (done) {
+            client1.emit('routeMe', 0, function (data) {
+                done();
+            });
+        });
+
+        test('should be able to call setClientName', function (done) {
+            client1.emit('setClientName', {name: 'blah', id: 0}, function (data) {
                 done();
             });
         });
@@ -95,7 +119,7 @@ suite('server.js', function() {
             });
         });
 
-        test('should create new game which can be retrieved using listGames', function(done) {
+        test('should create new game which can be retrieved using listGames', function (done) {
             client1.emit('listGames', null, function (beforedata) {
                 client1.emit('newGame', {
                     name: 'testGame',

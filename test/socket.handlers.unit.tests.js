@@ -44,6 +44,34 @@ suite('SocketHandler', function () {
             expect(sut.newGame).to.be.a('function');
         });
 
+        test('newGame should require object', function (done) {
+            sut.newGame(null, function (err) {
+                expect(err).to.be("Invalid data");
+                done()
+            });
+        });
+
+        test('newGame should require object with name', function(done) {
+            sut.newGame({playerCount: 0}, function (err) {
+                expect(err).to.be("Invalid data - missing name");
+                done();
+            });
+        });
+
+        test('newGame should require object with non-empty name', function(done) {
+            sut.newGame({name: '', playerCount: 0}, function (err) {
+                expect(err).to.be("Invalid data - missing name");
+                done();
+            });
+        });
+
+        test('newGame should require object with playerCount', function(done) {
+            sut.newGame({name: 'test'}, function (err) {
+                expect(err).to.be("Invalid data - missing playerCount");
+                done();
+            });
+        });
+
         test('should define listGames() method', function () {
             expect(sut.listGames).to.be.a('function');
         });
@@ -58,6 +86,10 @@ suite('SocketHandler', function () {
 
         test('should define routeClient() method', function () {
             expect(sut.routeClient).to.be.a('function');
+        });
+
+        test('should define setClientName() method', function () {
+            expect(sut.setClientName).to.be.a('function');
         });
     });
 
@@ -84,8 +116,12 @@ suite('SocketHandler', function () {
     });
 
     suite('subscribeGameList()', function () {
-        test('should execute callback', function (done) {
+        test('should execute callback function', function (done) {
             sut.subscribeGameList(null, done);
+        });
+
+        test('should skip callback if not function', function () {
+            sut.subscribeGameList(null, null);
         });
 
         suite('collaboration with Socket', function () {
@@ -102,6 +138,10 @@ suite('SocketHandler', function () {
     suite('unsubscribeGameList()', function () {
         test('should execute callback', function (done) {
             sut.unsubscribeGameList(null, done);
+        });
+
+        test('should skip callback if not function', function () {
+            sut.unsubscribeGameList(null, null);
         });
 
         suite('collaboration with Socket', function () {
@@ -133,6 +173,10 @@ suite('SocketHandler', function () {
 
         test('should execute callback', function (done) {
             sut.newGame(null, function () { done() });
+        });
+
+        test('should skip callback if not function', function () {
+            sut.newGame(null, null);
         });
 
         suite('collaboration', function () {
@@ -182,12 +226,6 @@ suite('SocketHandler', function () {
     });
 
     suite('routeClient()', function () {
-        setup(function () {
-        });
-
-        teardown(function () {
-        });
-
         test('should execute callback', function (done) {
             sut.routeClient(null, function () { done() });
         });
@@ -256,6 +294,44 @@ suite('SocketHandler', function () {
                 mockClientProvider.verify();
                 mockGameListingProvider.verify();
                 mockSocket.verify();
+            });
+        });
+    });
+
+    suite('setClientName()', function () {
+        test('should execute callback', function (done) {
+            sut.setClientName(null, function () { done() });
+        });
+
+        test('should skip callback if not function', function () {
+            sut.setClientName(null, null);
+        });
+
+        suite('collaboration', function () {
+            var testId = 1;
+            var updatedClient = new Client();
+            updatedClient.id = testId;
+            updatedClient.name = 'new name';
+            var existingClient = new Client();
+            existingClient.id = testId;
+
+            test('client id not found', function (done) {
+                mockClientProvider.expects('findById').once().withArgs(testId).callsArgWith(1, undefined);
+                sut.setClientName(updatedClient, function (err) {
+                    mockClientProvider.verify();
+                    expect(err).to.be('Failed: clientId not found');
+                    done();
+                });
+            });
+
+            test('client id found', function (done) {
+                mockClientProvider.expects('findById').once().withArgs(testId).callsArgWith(1, existingClient);
+                mockClientProvider.expects('save').once().withArgs(updatedClient).callsArgWith(1, updatedClient);
+                sut.setClientName(updatedClient, function (err) {
+                    mockClientProvider.verify();
+                    expect(err).to.be(undefined);
+                    done();
+                });
             });
         });
     });
