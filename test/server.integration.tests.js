@@ -1,5 +1,6 @@
 var expect = require('expect.js');
 var io = require('socket.io-client');
+var HanabiApp = require('../lib/HanabiApp.js').HanabiApp;
 
 var socketURL = 'http://localhost:3001';
 
@@ -12,8 +13,14 @@ suite('server.js', function () {
     var sut;
 
     setup(function () {
-        process.env['PORT'] = '3001';
-        sut = require('../server.js').server;
+        console.log('------main setup------');
+        sut = new HanabiApp(3001);
+        sut.listen();
+    });
+
+    teardown(function () {
+        console.log('----main teardown-----');
+        sut.close();
     });
 
     suite('contract', function () {
@@ -87,6 +94,71 @@ suite('server.js', function () {
         test('should be able to call setClientName', function (done) {
             client1.emit('setClientName', {name: 'blah', id: 0}, function (data) {
                 done();
+            });
+        });
+    });
+
+    suite('routeClient', function () {
+        var client1, client2, client3;
+        var game = {id: 1, name: 'testGame'};
+
+        setup(function () {
+            client1 = io.connect(socketURL, options);
+            client2 = io.connect(socketURL, options);
+        });
+
+        teardown(function () {
+            client1.disconnect();
+            client2.disconnect();
+        });
+
+        test('should cause client to receive setClientId and gotoSplash events when connecting for the first time', function (done) {
+            var id_out = null, gotoSplash = false;
+            var check_complete = function () {
+                if (id_out !== null && gotoSplash) { done() };
+            };
+            client1.on('setClientId', function (id) {
+                id_out = id;
+                check_complete();
+            });
+            client1.on('gotoSplash', function () {
+                gotoSplash = true;
+                check_complete();
+            });
+            client1.emit('routeClient', {id: null}, function (err) {
+                expect(err).to.be(undefined);
+            });
+            
+        });
+    });
+
+    suite('joinGame', function () {
+        var client1, client2, client3;
+        var game = {id: 1, name: 'testGame'};
+
+        setup(function () {
+            client1 = io.connect(socketURL, options);
+            client2 = io.connect(socketURL, options);
+        });
+
+        teardown(function () {
+            client1.disconnect();
+            client2.disconnect();
+        });
+
+        test('should not permit joinGame call before routeClient call', function (done) {
+            client1.emit('joinGame', game, function (err) {
+                expect(err).to.be('Error: clientId not set on socket, call routeClient first!');
+                done();
+            });
+        });
+
+        test('should callback with undefined on success', function (done) {
+            client1.emit('routeMe', {id: null}, function (err) {
+                client1.emit('joinGame', game, function (err) {
+                    expect(err).to.be(undefined);
+                    done();
+                });
             });
         });
     });
