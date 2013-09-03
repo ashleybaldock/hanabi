@@ -18,6 +18,10 @@
     <h1>Hanabi</h1>
     <div>
         <form>
+            <div>
+                <label for="splash_player_name">Player name:</label>
+                <input type="text" id="splash_player_name" />
+            </div>
             <button id="splash_new_game">New Game</button>
             <button id="splash_join_game">Join Game</button>
         </form>
@@ -31,6 +35,15 @@
             <div>
                 <label for="new_game_name">Game name:</label>
                 <input type="text" id="new_game_name" />
+            </div>
+            <div>
+                <label for="new_game_players"># of players:</label>
+                <select id="new_game_players">
+                    <option value="2">2</option>
+                    <option value="3">3</option>
+                    <option value="4">4</option>
+                    <option value="5">5</option>
+                </select>
             </div>
             <button id="new_game_cancel">Cancel</button>
             <button id="new_game_create">Create Game</button>
@@ -117,7 +130,6 @@
         <div class="slot" id="player4_slot2"></div>
         <div class="slot" id="player4_slot3"></div>
         <div class="slot" id="player4_slot4"></div>
-        <div class="slot" id="player4_slot5"></div>
     </div>
     <div class="player" id="player5">
         <h1>Player 5</h1>
@@ -125,7 +137,6 @@
         <div class="slot" id="player5_slot2"></div>
         <div class="slot" id="player5_slot3"></div>
         <div class="slot" id="player5_slot4"></div>
-        <div class="slot" id="player5_slot5"></div>
     </div>
 
     <div id="board">

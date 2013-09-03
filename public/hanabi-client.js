@@ -1,27 +1,33 @@
+if (console === undefined) {
+    var console = {
+        log: function () {}
+    }
+}
+
 var socket = io.connect('http://localhost:3000');
 
 var LocalStorage = {
+    client_id: undefined,
 //    $.removeCookie('game_session');
     get_clientId: function () {
-        return $.cookie('client_id');
+        if (this.client_id === undefined) {
+            this.client_id = $.cookie('client_id');
+        }
+        return this.client_id;
     },
 
     set_clientId: function (id) {
+        this.client_id = id;
         $.cookie('client_id', id, { expires: 7 });
     }
 };
 
 socket.on('connect', function (data) {
-    socket.emit('routeMe', $.cookie('game_session'));
+    socket.emit('routeMe', LocalStorage.get_clientId());
 });
 
 socket.on('setClientId', function (data) {
-});
-
-socket.on('gotoSplash', function (data) {
-});
-
-socket.on('gotoGame', function (data) {
+    LocalStorage.set_clientId(data);
 });
 
 
@@ -33,11 +39,11 @@ var Server = {
             name: name
         }, callback);
     },
-    newGame: function (name, playerCount) {
+    newGame: function (name, playerCount, callback) {
         socket.emit('newGame', {
             'name': name,
-            'player_count': playerCount
-        });
+            'playerCount': playerCount
+        }, callback);
     },
     subscribeGameList: function (callback) {
         socket.emit('subscribeGameList', null, callback);
@@ -47,6 +53,9 @@ var Server = {
     },
     listGames: function (callback) {
         socket.emit('listGames', null, callback);
+    },
+    joinGame: function (game, callback) {
+        socket.emit('joinGame', game, callback);
     }
 }
 
@@ -133,8 +142,20 @@ var layout = function (playerCount) {
         // Player 1 always visible at bottom center of screen
         position_bottomMiddle(player1);
 
+        var show_fifth_cards = function () {
+            player1.one('#player1_slot5').setStyle('display', 'block');
+            player2.one('#player2_slot5').setStyle('display', 'block');
+            player3.one('#player3_slot5').setStyle('display', 'block');
+        };
+        var hide_fifth_cards = function () {
+            player1.one('#player1_slot5').setStyle('display', 'none');
+            player2.one('#player2_slot5').setStyle('display', 'none');
+            player3.one('#player3_slot5').setStyle('display', 'none');
+        };
+
         // 2 player game, only Player 2 visible, top center of screen
         if (playerCount === 2) {
+            show_fifth_cards();
             position_topMiddle(player2);
             player3.setStyle('display', 'none');
             player4.setStyle('display', 'none');
@@ -143,6 +164,7 @@ var layout = function (playerCount) {
 
         // 3 player game, only Player 2 and 3 visible, top left and right of screen
         if (playerCount === 3) {
+            show_fifth_cards();
             position_topLeft(player2);
             position_topRight(player3);
             hide_pane(player4);
@@ -151,6 +173,7 @@ var layout = function (playerCount) {
 
         // 4 player game, only Player 2, 3 and 4 visible, top center, left and right
         if (playerCount === 4) {
+            hide_fifth_cards();
             position_left(player2);
             position_topMiddle(player3);
             position_right(player4);
@@ -159,6 +182,7 @@ var layout = function (playerCount) {
 
         // 5 player game, all Players visible, all positions
         if (playerCount === 5) {
+            hide_fifth_cards();
             position_left(player2);
             position_topLeft(player3);
             position_topRight(player4);
@@ -178,8 +202,6 @@ YUI().use('event-base', 'event-resize', 'node', function (Y) {
         var rules = Y.one('#menu_rules');
         var about = Y.one('#menu_about');
 
-        splash.setStyle('display', 'block');
-
         var show_pane = function (pane) {
             var width = $(window).width();
             var height = $(window).height();
@@ -191,59 +213,103 @@ YUI().use('event-base', 'event-resize', 'node', function (Y) {
         var hide_pane = function (pane) {
             pane.setStyle('display', 'none');
         };
+        var hide_all_panes = function () {
+            Y.all('.panel').setStyle('display', 'none');
+        };
 
-        splash.one('#splash_new_game').on('click', function(e) {
-            hide_pane(splash);
-            show_pane(newgame);
-            e.preventDefault();
-            e.stopPropagation();
+        // Events from server
+        socket.on('gotoSplash', function (data) {
+            hide_all_panes();
+            show_pane(splash);
         });
 
-        splash.one('#splash_join_game').on('click', function(e) {
+        socket.on('gotoGame', function (data) {
+            hide_all_panes();
+        });
+
+        splash.one('#splash_new_game').on('click', function(e) {
+            e.preventDefault(); e.stopPropagation();
             hide_pane(splash);
+            show_pane(newgame);
+        });
+
+        // Updates the game list display
+        socket.on('gameCreated', function (data) {
+        });
+        socket.on('gameStarted', function (data) {
+        });
+        socket.on('gameEnded', function (data) {
+        });
+        splash.one('#splash_join_game').on('click', function(e) {
+            e.preventDefault(); e.stopPropagation();
+            hide_pane(splash);
+            Server.listGames(function (list) {
+                // Update pane with game list
+            });
+            // Subscribe to list events to see changes
+            Server.subscribeGameList();
             show_pane(gamelist);
-            // TODO Subscribe to game list events
-            e.preventDefault();
-            e.stopPropagation();
         });
 
         newgame.one('#new_game_cancel').on('click', function(e) {
+            e.preventDefault(); e.stopPropagation();
             hide_pane(newgame);
             show_pane(splash);
-            e.preventDefault();
-            e.stopPropagation();
         });
         newgame.one('#new_game_create').on('click', function(e) {
+            e.preventDefault(); e.stopPropagation();
             // TODO trigger game creation (after field check)
             // Then jump to game in progress
-            hide_pane(newgame);
-            e.preventDefault();
-            e.stopPropagation();
+            var name = Y.one('#new_game_name').get('value');
+            var players = Y.one("#new_game_players").get('selectedIndex') + 2;
+            console.log('name: ' + name + ', players: ' + players);
+            Server.newGame(name, players, function (result) {
+                console.log('newGame result: ' + result);
+                if (typeof result === 'object') {
+                    Server.joinGame(result, function (result) {
+                        console.log('joinGame result: ' + result);
+                        if (result === true) {
+                            hide_pane(newgame);
+                        } else {
+                            // Error + back to splash
+                        }
+                    });
+                } else {
+                    // Error + back to new game
+                }
+            });
         });
 
         gamelist.one('#game_list_cancel').on('click', function(e) {
+            e.preventDefault(); e.stopPropagation();
+            Server.unsubscribeGameList();
             hide_pane(gamelist);
             show_pane(splash);
-            e.preventDefault();
-            e.stopPropagation();
         });
         gamelist.one('#game_list_join').on('click', function(e) {
+            e.preventDefault(); e.stopPropagation();
             // TODO attempt to join game in question
             // Then jump to game in progress
-            // Unsubscribe from game list events
-            hide_pane(gamelist);
-            e.preventDefault();
-            e.stopPropagation();
+            // TODO select game from list (GameListing object)
+            var selectedGame;
+            Server.joinGame(selectedGame, function (result) {
+                if (result === true) {
+                    Server.unsubscribeGameList();
+                    hide_pane(gamelist);
+                } else {
+                    // Error + back to game listing
+                }
+            });
         });
 
         quit.on('click', function(e) {
+            e.preventDefault(); e.stopPropagation();
             // TODO - end game in progress (leave if necessary)
             show_pane(splash);
-            e.preventDefault();
-            e.stopPropagation();
         });
 
         about.on('click', function(e) {
+            e.preventDefault(); e.stopPropagation();
             var pane = Y.one('#panel_about');
             show_pane(pane);
             pane.one('#panel_about_close').on('click', function(e) {
@@ -251,20 +317,15 @@ YUI().use('event-base', 'event-resize', 'node', function (Y) {
                 e.preventDefault();
                 e.stopPropagation();
             });
-            e.preventDefault();
-            e.stopPropagation();
         });
 
         rules.on('click', function(e) {
+            e.preventDefault(); e.stopPropagation();
             var pane = Y.one('#panel_rules');
             show_pane(pane);
             pane.one('#panel_rules_close').on('click', function(e) {
                 hide_pane(pane);
-                e.preventDefault();
-                e.stopPropagation();
             });
-            e.preventDefault();
-            e.stopPropagation();
         });
 
         Y.on('windowresize', function () {
