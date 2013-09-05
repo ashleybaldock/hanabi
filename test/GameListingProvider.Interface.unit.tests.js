@@ -4,7 +4,6 @@ var testUtil = require('./Utility.js');
 var dbConnectionString = process.env.DBCONNECTIONSTRING;
 var GameListing = require('../lib/GameListing.js').GameListing;
 
-
 var implementations = [
     function () { return new (require('../lib/MemoryGameListingProvider.js').GameListingProvider)() }
     //function () { return new (require('../lib/MongoDBGameListingProvider.js').GameListingProvider)(dbConnectionString) }
