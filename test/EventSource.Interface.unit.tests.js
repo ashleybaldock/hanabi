@@ -1,32 +1,23 @@
 var expect = require('expect.js');
 var sinon = require('sinon');
-
-var getObjectClass = function (obj) {
-    if (typeof obj !== 'object' || obj === null) return false;
-    return /(\w+)\(/.exec(obj.constructor.toString())[1];
-}
-
-var getFunctionName = function (func) {
-    if (typeof func !== 'function' || func === null) return false;
-    return /(\w+)\(/.exec(func.toString())[1];
-}
+var testUtil = require('./Utility.js');
 
 // All classes that should implement this interface defined here
 var implementations = [
-    require('../lib/ClueTokens.js').ClueTokens
+    function () { return new (require('../lib/ClueTokens.js').ClueTokens)(); }
 ];
 
 suite('EventSource.Interface implementations', function () {
     var implementation;
     for (var i = 0; i < implementations.length; i++) {
         implementation = implementations[i];
-        suite(getFunctionName(implementation), function () {
+        suite(testUtil.getFunctionName(implementation), function () {
             var sut;
             var eventName = 'testEvent';
             var invalidEventName = 'invalidEvent';
 
             setup(function () {
-                sut = new implementation();
+                sut = implementation();
                 sut.events = {'testEvent': []};
             });
 
