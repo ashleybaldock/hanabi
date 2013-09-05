@@ -151,5 +151,17 @@ suite('ClueTokens', function () {
                 sut.sendEvent('test');
             }).to.throwException('Error: event name invalid');
         });
+
+        test('when sentEvent() called, should execute all registered callbacks', function () {
+            var eventName = 'clueUsed';
+            var callback1 = sinon.spy();
+            var callback2 = sinon.spy();
+            var context = new Object();
+            sut.registerForEvent(eventName, callback1, context);
+            sut.registerForEvent(eventName, callback2, context);
+            sut.sendEvent(eventName);
+            expect(callback1.calledOn(context)).to.be(true);
+            expect(callback2.calledOn(context)).to.be(true);
+        });
     });
 });
