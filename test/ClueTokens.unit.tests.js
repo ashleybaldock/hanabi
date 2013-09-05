@@ -24,10 +24,6 @@ suite('ClueTokens', function () {
             expect(sut.restoreClue).to.be.a('function');
         });
 
-        test('should define registerForEvent() method', function () {
-            expect(sut.registerForEvent).to.be.a('function');
-        });
-
         test('should define events', function () {
             expect(sut.events).to.have.key('clueUsed');
             expect(sut.events).to.have.key('clueRestored');
@@ -125,43 +121,6 @@ suite('ClueTokens', function () {
                     done();
                 });
             });
-        });
-    });
-
-    suite('registerForEvent()', function () {
-        test('should throw error if eventName not valid', function () {
-            expect(function () {
-                sut.registerForEvent('test', function () {}, new Object());
-            }).to.throwException('Error: event name invalid');
-        });
-        test('should throw error if callback not a function', function () {
-            expect(function () {
-                sut.registerForEvent('clueUsed', null, new Object());
-            }).to.throwException('Error: callback not a function');
-        });
-        test('should throw error if context not an object', function () {
-            expect(function () {
-                sut.registerForEvent('clueUsed', function () {}, undefined);
-            }).to.throwException('Error: context not an object');
-        });
-    });
-    suite('sendEvent()', function () {
-        test('should throw error if eventName not valid', function () {
-            expect(function () {
-                sut.sendEvent('test');
-            }).to.throwException('Error: event name invalid');
-        });
-
-        test('when sentEvent() called, should execute all registered callbacks', function () {
-            var eventName = 'clueUsed';
-            var callback1 = sinon.spy();
-            var callback2 = sinon.spy();
-            var context = new Object();
-            sut.registerForEvent(eventName, callback1, context);
-            sut.registerForEvent(eventName, callback2, context);
-            sut.sendEvent(eventName);
-            expect(callback1.calledOn(context)).to.be(true);
-            expect(callback2.calledOn(context)).to.be(true);
         });
     });
 });

@@ -1,0 +1,17 @@
+EventSource (Interface)
+
+Functions:
+    registerForEvent (eventName, callback, context)
+        Checks validity of parameters
+        Registers callback/context against eventName in events list
+        Throws: 'Error: event name invalid';
+        Throws: 'Error: callback not a function';
+        Throws: 'Error: context not an object';
+    sendEvent (eventName)
+        Checks validity of parameters
+        Calls all callbacks registered against the specified event
+
+Properties:
+    events: dict
+        maps event name to list of subscribers
+        Override should define events for the implementation in question

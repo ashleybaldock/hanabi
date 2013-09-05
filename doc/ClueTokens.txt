@@ -1,0 +1,19 @@
+ClueTokens
+
+Implements:
+    EventSource
+
+Functions:
+    cluesRemaining (callback)
+        -> callback(numberOfCluesRemaining)
+    useClue (callback)
+        Uses a clue, giving an error if there are no clues remaining
+        Throws: 'Error: missing callback'
+        Success -> callback()
+        Failure -> callback('Error: No clues remain')
+        Sends: 'clueUsed' with: numberOfCluesRemaining
+    restoreClue (callback)
+        Restores a clue, if already at max clues silently does nothing
+        Throws: 'Error: missing callback'
+        Success -> callback()
+        Sends: 'clueRestored' with: numberOfCluesRemaining
