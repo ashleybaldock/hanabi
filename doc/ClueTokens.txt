@@ -5,6 +5,7 @@ Implements:
 
 Functions:
     cluesRemaining (callback)
+        Throws: 'Error: missing callback'
         -> callback(numberOfCluesRemaining)
     useClue (callback)
         Uses a clue, giving an error if there are no clues remaining

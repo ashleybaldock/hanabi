@@ -1,0 +1,15 @@
+Deck
+
+Implements:
+    EventSource
+
+Functions:
+    cardsRemaining (callback)
+        Throws: 'Error: missing callback'
+        -> callback(numberOfCardsRemaining)
+    drawCard (callback)
+        Draws the next card in sequence, callback is called with Card object
+        Throws: 'Error: missing callback'
+        Success -> callback(Card)
+        Failure -> callback('Error: Deck exhausted')
+        Sends: 'deckExhausted' when last card drawn
