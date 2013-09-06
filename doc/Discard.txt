@@ -1,0 +1,18 @@
+Discard
+
+Implements:
+    EventSource
+
+Functions:
+    getContents (callback)
+        Throws: 'Error: missing callback'
+        -> callback(discardedCards)
+        - discardedCards is an array of Card objects
+        - ordered by addition time (most recent last)
+    discardCard (callback)
+        Throws: 'Error: missing callback'
+        Discard a card, adding it to the discard pile
+        Success -> callback(Card)
+        Failure -> callback('Error: card invalid')
+        Sends: 'cardDiscarded' for each card discarded
+        

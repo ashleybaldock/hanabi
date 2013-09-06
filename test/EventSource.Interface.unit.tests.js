@@ -6,7 +6,8 @@ var testUtil = require('./Utility.js');
 var implementations = [
     function () { return new (require('../lib/ClueTokens.js').ClueTokens)(); },
     function () { return new (require('../lib/LifeTokens.js').LifeTokens)(); },
-    function () { return new (require('../lib/Deck.js').Deck)(); }
+    function () { return new (require('../lib/Deck.js').Deck)(); },
+    function () { return new (require('../lib/Discard.js').Discard)(); }
 ];
 
 suite('EventSource.Interface implementations', function () {
