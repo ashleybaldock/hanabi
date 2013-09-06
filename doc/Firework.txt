@@ -1,0 +1,19 @@
+Firework
+
+Implements:
+    EventSource
+
+Functions:
+    getColour (callback)
+        Throws 'Error: missing callback'
+        -> callback(colourOfFirework)
+    getValue (callback)
+        Throws 'Error: missing callback'
+        -> callback(currentValueOfFirework)
+    play (callback)
+        Attempts to play a card to increase the value of this firework
+        Throws 'Error: missing callback'
+        Success -> callback()
+        Sends: fireworkComplete upon maximum value being reached with colourOfFirework
+        Failure -> callback('Error: Invalid argument')
+        Failure -> callback('Error: Invalid play')

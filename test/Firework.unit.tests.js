@@ -1,4 +1,5 @@
 var expect = require('expect.js');
+var sinon = require('sinon');
 
 var Firework = require('../lib/Firework.js').Firework;
 
@@ -7,9 +8,6 @@ suite('Firework', function () {
 
     setup(function () {
         sut = new Firework('red');
-    });
-
-    teardown(function () {
     });
 
     suite('contract', function () {
@@ -25,129 +23,174 @@ suite('Firework', function () {
             expect(sut.play).to.be.a('function');
         });
 
-        // TODO nice way of doing argument checking
-        test('play() should accept only Number as first argument', function () {
-            expect(function () {
-                sut.play(1);
-            }).to.not.throwException();
-            expect(function () {
-                sut.play();
-            }).to.throwException(/InvalidArgument/);
-            expect(function () {
-                sut.play('');
-            }).to.throwException(/InvalidArgument/);
+        test('play() should accept only Number as first argument', function (done) {
+            sut.play(undefined, function (err) {
+                expect(err).to.be('Error: Invalid argument');
+                done();
+            });
         });
 
-        test('play() should accept only values below 6', function () {
-            expect(function () {
-                sut.play(6);
-            }).to.throwException(/InvalidArgument/);
+        test('play() should accept only values below 6', function (done) {
+            sut.play(6, function (err) {
+                expect(err).to.be('Error: Invalid argument');
+                done();
+            });
         });
 
-        test('play() should accept only values above 0', function () {
-            expect(function () {
-                sut.play(0);
-            }).to.throwException(/InvalidArgument/);
+        test('play() should accept only values above 0', function (done) {
+            sut.play(0, function (err) {
+                expect(err).to.be('Error: Invalid argument');
+                done();
+            });
         });
 
-        test('should define addFireworkCompleteObserver() method', function () {
-            expect(sut.addFireworkCompleteObserver).to.be.a('function');
-        });
-
-        test('addFireworkCompleteObserver() method should accept Function as first argument, Object as second argument', function () {
-            expect(function () {
-                sut.addFireworkCompleteObserver(function () {}, new Object());
-            }).to.not.throwException();
-            expect(function () {
-                sut.addFireworkCompleteObserver(1, '');
-            }).to.throwException(/InvalidArgument/);
-        });
-
-        test('should define addInvalidPlayObserver() method', function () {
-            expect(sut.addInvalidPlayObserver).to.be.a('function');
-        });
-
-        test('addInvalidPlayObserver() method should accept Function as first argument, Object as second argument', function () {
-            expect(function () {
-                sut.addInvalidPlayObserver(function () {}, new Object());
-            }).to.not.throwException();
-            expect(function () {
-                sut.addInvalidPlayObserver(1, '');
-            }).to.throwException(/InvalidArgument/);
+        test('should define events', function () {
+            expect(sut.events).to.have.key('fireworkComplete');
         });
     });
 
     suite('constructor', function () {
-        test('on construct should set colour', function () {
-            expect(sut.getColour()).to.be('red');
+        test('on construct should set colour', function (done) {
+            sut.getColour(function (colour) {
+                expect(colour).to.be('red');
+                done();
+            });
         });
 
-        test('on construct should set value to 0', function () {
-            expect(sut.getValue()).to.be(0);
+        test('on construct should set value to 0', function (done) {
+            sut.getValue(function (value) {
+                expect(value).to.be(0);
+                done();
+            });
+        });
+    });
+
+    suite('getColour()', function () {
+        test('should throw error if callback not a function', function () {
+            expect(function () {
+                sut.getColour();
+            }).to.throwException('Error: missing callback');
+        });
+
+        test('should execute callback with colour', function (done) {
+            sut.getColour(function (colour) {
+                expect(colour).to.be('red');
+                done();
+            });
+        });
+    });
+
+    suite('getValue()', function () {
+        test('should throw error if callback not a function', function () {
+            expect(function () {
+                sut.getValue();
+            }).to.throwException('Error: missing callback');
+        });
+
+        test('should execute callback with current value', function (done) {
+            sut.getValue(function (value) {
+                expect(value).to.be(0);
+                done();
+            });
+        });
+
+        test('after correct play should show updated value', function (done) {
+            sut.getValue(function (value) {
+                expect(value).to.be(0);
+                sut.play(1, function (err) {
+                    expect(err).to.be(undefined);
+                    sut.getValue(function (value) {
+                        expect(value).to.be(1);
+                        done();
+                    });
+                });
+            });
         });
     });
 
     suite('play()', function () {
-        var invalidPlayObserver1called;
-        var addFireworkCompleteObserver1called;
-        var addFireworkCompleteObserver2called;
-
-        setup(function () {
-            invalidPlayObserver1called = false;
-            sut.addInvalidPlayObserver(function (colour) { invalidPlayObserver1called = true; }, this);
-
-            addFireworkCompleteObserver1called = false;
-            addFireworkCompleteObserver2called = false;
-            sut.addFireworkCompleteObserver(function (colour) { addFireworkCompleteObserver1called = true; }, this);
-            sut.addFireworkCompleteObserver(function (colour) { addFireworkCompleteObserver2called = true; }, this);
-        });
-
-        test('on valid call should increment value', function () {
-            sut.play(1);
-            expect(sut.getValue()).to.be(1);
-            sut.play(2);
-            expect(sut.getValue()).to.be(2);
-        });
-
-        test('on valid call should not trigger invalidPlay callback', function () {
-            sut.play(1);
-            expect(invalidPlayObserver1called).to.be(false);
-        });
-
-        test('on invalid call (too high) should throw exception and trigger invalidPlay callback', function () {
-            expect(function () {
-                sut.play(2);
-            }).to.throwException(/InvalidPlay/);
-            expect(invalidPlayObserver1called).to.be(true);
-        });
-
-        test('on invalid call (same) should throw exception and trigger invalidPlay callback', function () {
-            sut.play(1);
+        test('should throw error if callback not a function', function () {
             expect(function () {
                 sut.play(1);
-            }).to.throwException(/InvalidPlay/);
-            expect(invalidPlayObserver1called).to.be(true);
+            }).to.throwException('Error: missing callback');
         });
 
-        test('on invalid call (too low) should throw exception and trigger invalidPlay callback', function () {
-            sut.play(1);
-            sut.play(2);
-            expect(function () {
-                sut.play(1);
-            }).to.throwException(/InvalidPlay/);
-            expect(invalidPlayObserver1called).to.be(true);
+        test('on valid call should increment value', function (done) {
+            var callback = sinon.spy();
+            var context = new Object();
+            sut.registerForEvent('fireworkComplete', callback, context);
+            sut.getValue(function (value) {
+                expect(value).to.be(0);
+                sut.play(1, function (err) {
+                    expect(err).to.be(undefined);
+                    sut.getValue(function (value) {
+                        expect(value).to.be(1);
+                        sut.play(2, function (err) {
+                            expect(err).to.be(undefined);
+                            sut.getValue(function (value) {
+                                expect(value).to.be(2);
+                                expect(callback.callCount).to.be(0);
+                                done();
+                            });
+                        });
+                    });
+                });
+            });
         });
 
-        test('on call when max value reached should trigger registered callbacks', function () {
-            sut.play(1);
-            sut.play(2);
-            sut.play(3);
-            sut.play(4);
-            expect(addFireworkCompleteObserver1called).to.be(false);
-            expect(addFireworkCompleteObserver2called).to.be(false);
-            sut.play(5);
-            expect(addFireworkCompleteObserver1called).to.be(true);
-            expect(addFireworkCompleteObserver2called).to.be(true);
+        test('on invalid call (too high) should execute callback with error', function (done) {
+            var callback = sinon.spy();
+            var context = new Object();
+            sut.registerForEvent('fireworkComplete', callback, context);
+            sut.play(2, function (err) {
+                expect(callback.callCount).to.be(0);
+                expect(err).to.be('Error: Invalid play');
+                done();
+            });
+        });
+
+        test('on invalid call (same) should execute callback with error', function (done) {
+            var callback = sinon.spy();
+            var context = new Object();
+            sut.registerForEvent('fireworkComplete', callback, context);
+            sut.play(1, function (err) {
+                expect(err).to.be(undefined);
+                sut.play(1, function (err) {
+                    expect(callback.callCount).to.be(0);
+                    expect(err).to.be('Error: Invalid play');
+                    done();
+                });
+            });
+        });
+
+        test('on invalid call (too low) should execute callback with error', function (done) {
+            var callback = sinon.spy();
+            var context = new Object();
+            sut.registerForEvent('fireworkComplete', callback, context);
+            sut.play(1, function (err) {
+                expect(err).to.be(undefined);
+                sut.play(2, function (err) {
+                    expect(err).to.be(undefined);
+                    sut.play(1, function (err) {
+                        expect(callback.callCount).to.be(0);
+                        expect(err).to.be('Error: Invalid play');
+                        done();
+                    });
+                });
+            });
+        });
+
+        test('when firework max value reached should trigger fireworkComplete event', function (done) {
+            var callback = sinon.spy();
+            var context = new Object();
+            sut.registerForEvent('fireworkComplete', callback, context);
+            sut.value = 4;
+            sut.play(5, function (err) {
+                expect(err).to.be(undefined);
+                expect(callback.calledOn(context)).to.be(true);
+                expect(callback.calledWithExactly('red')).to.be(true);
+                done();
+            });
         });
     });
 });
