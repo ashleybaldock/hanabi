@@ -36,6 +36,30 @@ suite('Fireworks', function () {
             expect(sut.play).to.be.a('function');
         });
 
+        test('play() should accept valid Card object', function (done) {
+            sut.play(undefined, function (err) {
+                expect(err).to.be('Error: Invalid argument');
+                sut.play(null, function (err) {
+                    expect(err).to.be('Error: Invalid argument');
+                    done();
+                });
+            });
+        });
+
+        test('play() should accept Card with value', function (done) {
+            sut.play({colour: 'red'}, function (err) {
+                expect(err).to.be('Error: Invalid argument');
+                done();
+            });
+        });
+
+        test('play() should accept Card with valid colour', function (done) {
+            sut.play({colour: 'pink', value: 2}, function (err) {
+                expect(err).to.be('Error: Invalid argument');
+                done();
+            });
+        });
+
         test('should define onFireworkComplete() method', function () {
             expect(sut.onFireworkComplete).to.be.a('function');
         });
@@ -139,6 +163,24 @@ suite('Fireworks', function () {
             expect(function () {
                 sut.play();
             }).to.throwException('Error: missing callback');
+        });
+
+        test('should call corresponding Firework.play() method passing callback', function (done) {
+            redPlayStub = sinon.stub(redFirework, 'play').callsArgWith(1, undefined);
+            sut.play({colour: 'red', value: 2}, function (err) {
+                expect(redPlayStub.calledWith(2)).to.be.ok();
+                expect(err).to.be(undefined);
+                done();
+            });
+        });
+
+        test('should execute callback with error from Firework', function (done) {
+            redPlayStub = sinon.stub(redFirework, 'play').callsArgWith(1, 'Error');
+            sut.play({colour: 'red', value: 2}, function (err) {
+                expect(redPlayStub.calledWith(2)).to.be.ok();
+                expect(err).to.be('Error');
+                done();
+            });
         });
     });
 });
