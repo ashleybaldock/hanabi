@@ -19,6 +19,10 @@ suite('Firework', function () {
             expect(sut.getValue).to.be.a('function');
         });
 
+        test('should define isComplete() method', function () {
+            expect(sut.isComplete).to.be.a('function');
+        });
+
         test('should define play() method', function () {
             expect(sut.play).to.be.a('function');
         });
@@ -119,14 +123,17 @@ suite('Firework', function () {
             var callback = sinon.spy();
             var context = new Object();
             sut.registerForEvent('fireworkComplete', callback, context);
+            expect(sut.isComplete()).to.be(false);
             sut.getValue(function (value) {
                 expect(value).to.be(0);
                 sut.play(1, function (err) {
                     expect(err).to.be(undefined);
+                    expect(sut.isComplete()).to.be(false);
                     sut.getValue(function (value) {
                         expect(value).to.be(1);
                         sut.play(2, function (err) {
                             expect(err).to.be(undefined);
+                            expect(sut.isComplete()).to.be(false);
                             sut.getValue(function (value) {
                                 expect(value).to.be(2);
                                 expect(callback.callCount).to.be(0);
@@ -189,6 +196,7 @@ suite('Firework', function () {
                 expect(err).to.be(undefined);
                 expect(callback.calledOn(context)).to.be(true);
                 expect(callback.calledWithExactly('red')).to.be(true);
+                expect(sut.isComplete()).to.be(true);
                 done();
             });
         });

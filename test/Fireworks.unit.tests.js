@@ -40,9 +40,13 @@ suite('Fireworks', function () {
             expect(sut.onFireworkComplete).to.be.a('function');
         });
 
+        test('should define isComplete() method', function () {
+            expect(sut.isComplete).to.be.a('function');
+        });
+
         test('should define events', function () {
             expect(sut.events).to.have.key('fireworkComplete');
-            expect(sut.events).to.have.key('fireworksComplete');
+            expect(sut.events).to.have.key('allFireworksComplete');
         });
     });
 
@@ -70,6 +74,71 @@ suite('Fireworks', function () {
             expect(sut.fireworks.green).to.be(greenFirework);
             expect(sut.fireworks.yellow).to.be(yellowFirework);
             expect(sut.fireworks.white).to.be(whiteFirework);
+        });
+    });
+
+    suite('onFireworkComplete()', function () {
+        test('if colour not valid option should ignore', function () {
+            var callback = sinon.spy();
+            var context = new Object();
+            sut.registerForEvent('fireworkComplete', callback, context);
+            sut.registerForEvent('allFireworksComplete', callback, context);
+            sut.onFireworkComplete('pink');
+            expect(callback.callCount).to.be(0);
+        });
+
+        test('should emit fireworkComplete event to listeners', function () {
+            var callback = sinon.spy();
+            var callbackAll = sinon.spy();
+            var context = new Object();
+            sut.registerForEvent('fireworkComplete', callback, context);
+            sut.registerForEvent('allFireworksComplete', callbackAll, context);
+            sut.onFireworkComplete('red');
+            expect(callbackAll.callCount).to.be(0);
+            expect(callback.calledOn(context)).to.be(true);
+            expect(callback.calledWithExactly('red')).to.be(true);
+        });
+
+        test('if all fireworks complete, should emit allFireworksComplete event to listeners', function () {
+            var trueStub = sinon.stub(sut, 'isComplete').returns(true);
+            var callback = sinon.spy();
+            var callbackAll = sinon.spy();
+            var context = new Object();
+            sut.registerForEvent('fireworkComplete', callback, context);
+            sut.registerForEvent('allFireworksComplete', callbackAll, context);
+            sut.onFireworkComplete('red');
+            expect(callbackAll.calledOn(context)).to.be(true);
+            expect(callback.calledOn(context)).to.be(true);
+            expect(callback.calledWithExactly('red')).to.be(true);
+            trueStub.restore();
+        });
+    });
+
+    suite('isComplete()', function () {
+        test('should return true if all fireworks complete', function () {
+            redGetValueStub = sinon.stub(redFirework, 'isComplete').returns(true);
+            blueGetValueStub = sinon.stub(blueFirework, 'isComplete').returns(true);
+            greenGetValueStub = sinon.stub(greenFirework, 'isComplete').returns(true);
+            yellowGetValueStub = sinon.stub(yellowFirework, 'isComplete').returns(true);
+            whiteGetValueStub = sinon.stub(whiteFirework, 'isComplete').returns(true);
+            expect(sut.isComplete()).to.be(true);
+        });
+
+        test('should return false if any firework incomplete', function () {
+            redGetValueStub = sinon.stub(redFirework, 'isComplete').returns(true);
+            blueGetValueStub = sinon.stub(blueFirework, 'isComplete').returns(true);
+            greenGetValueStub = sinon.stub(greenFirework, 'isComplete').returns(true);
+            yellowGetValueStub = sinon.stub(yellowFirework, 'isComplete').returns(false);
+            whiteGetValueStub = sinon.stub(whiteFirework, 'isComplete').returns(true);
+            expect(sut.isComplete()).to.be(false);
+        });
+    });
+
+    suite('play()', function () {
+        test('should throw error if callback not a function', function () {
+            expect(function () {
+                sut.play();
+            }).to.throwException('Error: missing callback');
         });
     });
 });
