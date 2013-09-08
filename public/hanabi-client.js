@@ -4,8 +4,6 @@ if (console === undefined) {
     }
 }
 
-var socket = io.connect('http://localhost:3000');
-
 var LocalStorage = {
     client_id: undefined,
 //    $.removeCookie('game_session');
@@ -22,11 +20,15 @@ var LocalStorage = {
     }
 };
 
+var socket = io.connect('http://localhost:3000');
+
 socket.on('connect', function (data) {
-    socket.emit('routeClient', LocalStorage.get_clientId());
+    console.log('connect - sending routeClient');
+    socket.emit('routeClient', {id: LocalStorage.get_clientId()});
 });
 
 socket.on('setClientId', function (data) {
+    console.log('setClientId received from server - new id: ' + data);
     LocalStorage.set_clientId(data);
 });
 
@@ -264,20 +266,20 @@ YUI().use('event-base', 'event-resize', 'node', function (Y) {
             var players = Y.one("#new_game_players").get('selectedIndex') + 2;
             console.log('name: ' + name + ', players: ' + players);
             Server.newGame(name, players, function (result) {
-                console.log('newGame result: ' + result);
+                console.log('newGame result: ' + JSON.stringify(result));
                 if (typeof result === 'object') {
                     Server.joinGame(result, function (result) {
                         // TODO implement joinGame
-                        console.log('joinGame result: ' + result);
+                        console.log('joinGame result: ' + JSON.stringify(result));
                         if (result === true) {
                             hide_pane(newgame);
                         } else {
-                            console.log('Error: joinGame call failed with: ' + result);
+                            console.log('Error: joinGame call failed with: ' + JSON.stringify(result));
                             // Error + back to splash
                         }
                     });
                 } else {
-                    console.log('Error: newGame call failed with: ' + result);
+                    console.log('Error: newGame call failed with: ' + JSON.stringify(result));
                     // Error + back to new game
                 }
             });
