@@ -141,9 +141,6 @@ var layout = function (playerCount) {
         board.setX(width / 2 - parseInt(board.getComputedStyle('width'), 10) / 2);
         board.setY(height / 2 - parseInt(board.getComputedStyle('height'), 10) / 2);
 
-        // Player 1 always visible at bottom center of screen
-        position_bottomMiddle(player1);
-
         var show_fifth_cards = function () {
             player1.one('#player1_slot5').setStyle('display', 'block');
             player2.one('#player2_slot5').setStyle('display', 'block');
@@ -191,6 +188,8 @@ var layout = function (playerCount) {
             position_right(player5);
         }
         
+        // Player 1 always visible at bottom center of screen
+        position_bottomMiddle(player1);
     });
 };
 
