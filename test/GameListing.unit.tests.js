@@ -62,9 +62,9 @@ suite('Game', function () {
         });
 
         test('should define events', function () {
-            expect(sut.events).to.have.key('playerJoined');
-            expect(sut.events).to.have.key('playerLeft');
-            expect(sut.events).to.have.key('gameReady');
+            expect(sut.events).to.contain('playerJoined');
+            expect(sut.events).to.contain('playerLeft');
+            expect(sut.events).to.contain('gameReady');
         });
     });
 

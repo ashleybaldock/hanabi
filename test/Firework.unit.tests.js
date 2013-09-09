@@ -49,7 +49,7 @@ suite('Firework', function () {
         });
 
         test('should define events', function () {
-            expect(sut.events).to.have.key('fireworkComplete');
+            expect(sut.events).to.contain('fireworkComplete');
         });
     });
 

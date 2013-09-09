@@ -21,7 +21,7 @@ suite('Deck', function () {
         });
 
         test('should define events', function () {
-            expect(sut.events).to.have.key('cardDiscarded');
+            expect(sut.events).to.contain('cardDiscarded');
         });
     });
 

@@ -69,8 +69,8 @@ suite('Fireworks', function () {
         });
 
         test('should define events', function () {
-            expect(sut.events).to.have.key('fireworkComplete');
-            expect(sut.events).to.have.key('allFireworksComplete');
+            expect(sut.events).to.contain('fireworkComplete');
+            expect(sut.events).to.contain('allFireworksComplete');
         });
     });
 

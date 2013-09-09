@@ -20,7 +20,7 @@ suite('Hand', function () {
         });
 
         test('should define events', function () {
-            expect(sut.events).to.have.key('cardDrawn');
+            expect(sut.events).to.contain('cardDrawn');
         });
     });
 

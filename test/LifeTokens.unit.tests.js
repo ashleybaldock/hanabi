@@ -21,8 +21,8 @@ suite('LifeTokens', function () {
         });
 
         test('should define events', function () {
-            expect(sut.events).to.have.key('lifeLost');
-            expect(sut.events).to.have.key('allLivesLost');
+            expect(sut.events).to.contain('lifeLost');
+            expect(sut.events).to.contain('allLivesLost');
         });
     });
 

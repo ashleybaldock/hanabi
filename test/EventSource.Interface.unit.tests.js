@@ -10,6 +10,8 @@ var implementations = [
     function () { return new (require('../lib/Discard.js').Discard)(); },
     function () { return new (require('../lib/TurnCounter.js').TurnCounter)(); },
     function () { return new (require('../lib/GameListing.js').GameListing)(); },
+    function () { return new (require('../lib/Firework.js').Firework)(); },
+    function () { return new (require('../lib/Fireworks.js').Fireworks)(); },
     function () { return new (require('../lib/Hand.js').Hand)(); }
 ];
 
@@ -24,7 +26,6 @@ suite('EventSource.Interface implementations', function () {
 
             setup(function () {
                 sut = implementation();
-                sut.events = {'testEvent': []};
             });
 
             suite('contract', function () {
@@ -36,8 +37,38 @@ suite('EventSource.Interface implementations', function () {
                     expect(sut.sendEvent).to.be.a('function');
                 });
 
+                test('should define createEventWiring() method', function () {
+                    expect(sut.createEventWiring).to.be.a('function');
+                });
+
+                test('should define wiredEvents() method', function () {
+                    expect(sut.wiredEvents).to.be.a('function');
+                });
+
                 test('should define events', function () {
-                    expect(sut.events).to.be.a(typeof {});
+                    expect(sut.events).to.be.an('array');
+                });
+            });
+
+            suite('constructor', function () {
+                test('should create wiring', function () {
+                    var wirings = sut.wiredEvents();
+                    expect(wirings).to.be.an('object');
+                    for (var i = 0; i < sut.events.length; i++) {
+                        expect(wirings).to.have.key(sut.events[i]);
+                        expect(wirings[sut.events[i]]).to.be.an('array');
+                        expect(wirings[sut.events[i]]).to.have.length(0);
+                    }
+                });
+            });
+
+            suite('createEventWiring()', function () {
+                test('should return correct wiring', function () {
+                    sut.events = [eventName];
+                    var wiring = sut.createEventWiring();
+                    expect(wiring).to.have.key(eventName);
+                    expect(wiring[eventName]).to.be.an('array');
+                    expect(wiring[eventName]).to.have.length(0);
                 });
             });
 
@@ -57,6 +88,19 @@ suite('EventSource.Interface implementations', function () {
                         sut.registerForEvent(eventName, function () {}, undefined);
                     }).to.throwException('Error: context not an object');
                 });
+
+                test('should add event to wirings returned by wiredEvents()', function () {
+                    sut.events = [eventName];
+                    var wiring = sut.createEventWiring();
+                    var stub = sinon.stub(sut, 'wiredEvents').returns(wiring);
+                    var spy = sinon.spy();
+                    var context = new Object();
+                    sut.registerForEvent(eventName, spy, context);
+                    expect(wiring[eventName][0]).to.have.key('callback');
+                    expect(wiring[eventName][0]).to.have.key('context');
+                    expect(wiring[eventName][0].callback).to.be(spy);
+                    expect(wiring[eventName][0].context).to.be(context);
+                });
             });
 
             suite('sendEvent()', function () {
@@ -66,7 +110,10 @@ suite('EventSource.Interface implementations', function () {
                     }).to.throwException('Error: event name invalid');
                 });
 
-                test('when sentEvent() called, should execute all registered callbacks', function () {
+                test('should execute all registered callbacks', function () {
+                    sut.events = [eventName];
+                    var wiring = sut.createEventWiring();
+                    var stub = sinon.stub(sut, 'wiredEvents').returns(wiring);
                     var callback1 = sinon.spy();
                     var callback2 = sinon.spy();
                     var context = new Object();

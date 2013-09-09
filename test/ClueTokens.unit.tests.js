@@ -25,8 +25,8 @@ suite('ClueTokens', function () {
         });
 
         test('should define events', function () {
-            expect(sut.events).to.have.key('clueUsed');
-            expect(sut.events).to.have.key('clueRestored');
+            expect(sut.events).to.contain('clueUsed');
+            expect(sut.events).to.contain('clueRestored');
         });
     });
 
