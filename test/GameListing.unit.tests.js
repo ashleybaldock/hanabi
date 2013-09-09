@@ -9,6 +9,7 @@ suite('Game', function () {
     var name = 'testGame', playerCount = 2;
 
     setup(function () {
+        console.log('GameListing setup');
         sut = new Game(name, playerCount);
         sut2player = new Game(name, 2);
         sut3player = new Game(name, 3);
@@ -111,6 +112,16 @@ suite('Game', function () {
             expect(function () {
                 sut.addPlayer();
             }).to.throwException('Error: missing callback');
+        });
+
+        test('should wire up cardDrawn event on Hand', function (done) {
+            var player = new PlayerInterface();
+            var stub = sinon.stub(player, 'getPlayerId').returns(0);
+            var spy = sinon.spy(sut.hands[0], 'registerForEvent');
+            sut.addPlayer(player, function (err) {
+                expect(spy.calledWith('cardDrawn')).to.be.ok();
+                done();
+            });
         });
 
         test('should replace existing player if ID matches and send playerJoined event', function (done) {
@@ -320,6 +331,10 @@ suite('Game', function () {
             sinon.stub(player3, 'getPlayerId').returns(2);
             var player4 = new PlayerInterface();
             sinon.stub(player4, 'getPlayerId').returns(3);
+            var spyDrawObserver1 = sinon.spy(player1, 'cardDrawnObserver');
+            var spyDrawObserver2 = sinon.spy(player2, 'cardDrawnObserver');
+            var spyDrawObserver3 = sinon.spy(player3, 'cardDrawnObserver');
+            var spyDrawObserver4 = sinon.spy(player4, 'cardDrawnObserver');
             var spyHand1 = sinon.spy(sut4player.hands[0], 'drawCard');
             var spyHand2 = sinon.spy(sut4player.hands[1], 'drawCard');
             var spyHand3 = sinon.spy(sut4player.hands[2], 'drawCard');
@@ -333,10 +348,18 @@ suite('Game', function () {
                                 expect(spyHand2.callCount).to.be(5);
                                 expect(spyHand3.callCount).to.be(5);
                                 expect(spyHand4.callCount).to.be(5);
+                                expect(spyDrawObserver1.callCount).to.be(4);
+                                expect(spyDrawObserver2.callCount).to.be(4);
+                                expect(spyDrawObserver3.callCount).to.be(4);
+                                expect(spyDrawObserver4.callCount).to.be(4);
                                 expect(sut4player.hands[0].cards).to.have.length(4);
                                 expect(sut4player.hands[1].cards).to.have.length(4);
                                 expect(sut4player.hands[2].cards).to.have.length(4);
                                 expect(sut4player.hands[3].cards).to.have.length(4);
+                                spyDrawObserver1.restore();
+                                spyDrawObserver2.restore();
+                                spyDrawObserver3.restore();
+                                spyDrawObserver4.restore();
                                 spyHand1.restore();
                                 spyHand2.restore();
                                 spyHand3.restore();
