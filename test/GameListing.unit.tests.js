@@ -71,6 +71,7 @@ suite('Game', function () {
         test('should set name and playerCount from params', function () {
             expect(sut.name).to.be(name);
             expect(sut.playerCount).to.be(playerCount);
+            expect(sut.current).to.be(0);
         });
 
         test('should init players with correct number of slots', function () {
@@ -343,6 +344,24 @@ suite('Game', function () {
                                 done();
                             });
                         });
+                    });
+                });
+            });
+        });
+
+        test('should send starting player a request for a move', function (done) {
+            var player1 = new PlayerInterface();
+            sinon.stub(player1, 'getPlayerId').returns(0);
+            var player2 = new PlayerInterface();
+            sinon.stub(player2, 'getPlayerId').returns(1);
+            var spyPlayer1 = sinon.spy(player1, 'moveObserver');
+            var spyPlayer2 = sinon.spy(player2, 'moveObserver');
+            sut.addPlayer(player1, function () {
+                sut.addPlayer(player2, function () {
+                    sut.start(function (err) {
+                        expect(spyPlayer1.callCount).to.be(1);
+                        expect(spyPlayer2.callCount).to.be(0);
+                        done();
                     });
                 });
             });
