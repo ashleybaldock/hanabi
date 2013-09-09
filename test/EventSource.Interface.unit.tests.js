@@ -9,7 +9,8 @@ var implementations = [
     function () { return new (require('../lib/Deck.js').Deck)(); },
     function () { return new (require('../lib/Discard.js').Discard)(); },
     function () { return new (require('../lib/TurnCounter.js').TurnCounter)(); },
-    function () { return new (require('../lib/GameListing.js').GameListing)(); }
+    function () { return new (require('../lib/GameListing.js').GameListing)(); },
+    function () { return new (require('../lib/Hand.js').Hand)(); }
 ];
 
 suite('EventSource.Interface implementations', function () {
