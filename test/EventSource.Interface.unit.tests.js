@@ -7,7 +7,9 @@ var implementations = [
     function () { return new (require('../lib/ClueTokens.js').ClueTokens)(); },
     function () { return new (require('../lib/LifeTokens.js').LifeTokens)(); },
     function () { return new (require('../lib/Deck.js').Deck)(); },
-    function () { return new (require('../lib/Discard.js').Discard)(); }
+    function () { return new (require('../lib/Discard.js').Discard)(); },
+    function () { return new (require('../lib/TurnCounter.js').TurnCounter)(); },
+    function () { return new (require('../lib/GameListing.js').GameListing)(); }
 ];
 
 suite('EventSource.Interface implementations', function () {
