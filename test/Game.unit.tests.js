@@ -1,7 +1,7 @@
 var expect = require('expect.js');
 var sinon = require('sinon');
 
-var Game = require('../lib/GameListing.js').GameListing;
+var Game = require('../lib/Game.js').Game;
 var PlayerInterface = require('../lib/PlayerInterface.js').PlayerInterface;
 
 suite('Game', function () {
@@ -9,7 +9,7 @@ suite('Game', function () {
     var name = 'testGame', playerCount = 2;
 
     setup(function () {
-        console.log('GameListing setup');
+        console.log('Game setup');
         sut = new Game(name, playerCount);
         sut2player = new Game(name, 2);
         sut3player = new Game(name, 3);

@@ -1,9 +1,9 @@
 var expect = require('expect.js');
 var sinon = require('sinon');
-var SocketHandler = require('../lib/socket.handlers.js').SocketHandler;
-var GameListingProvider = require('../lib/MemoryGameListingProvider.js').GameListingProvider;
+var SocketHandler = require('../lib/SocketHandler.js').SocketHandler;
+var GameProvider = require('../lib/MemoryGameProvider.js').GameProvider;
 var ClientProvider = require('../lib/MemoryClientProvider.js').ClientProvider;
-var GameListing = require('../lib/GameListing.js').GameListing;
+var Game = require('../lib/Game.js').Game;
 var Client = require('../lib/Client.js').Client;
 
 // Methods our Socket mock should define (that we use)
@@ -26,19 +26,19 @@ sock.__defineGetter__('broadcast', function () {
 suite('SocketHandler', function () {
     var sut
       , mockSocket
-      , mockGameListingProvider
-      , mockGameListingConstructor
+      , mockGameProvider
+      , mockGameConstructor
       , mockClientProvider
       , mockClientConstructor;
 
     setup(function () {
         mockSocket = sinon.mock(sock);
         mockSocket.object.__defineGetter__('broadcast', function () { this.flags.broadcast = true; return this; });
-        mockGameListingProvider = sinon.mock(new GameListingProvider());
+        mockGameProvider = sinon.mock(new GameProvider());
         mockClientProvider = sinon.mock(new ClientProvider());
-        mockGameListingConstructor = sinon.stub();
+        mockGameConstructor = sinon.stub();
         mockClientConstructor = sinon.stub();
-        sut = new SocketHandler(mockSocket.object, mockGameListingProvider.object, mockGameListingConstructor, mockClientProvider.object, mockClientConstructor);
+        sut = new SocketHandler(mockSocket.object, mockGameProvider.object, mockGameConstructor, mockClientProvider.object, mockClientConstructor);
     });
 
     suite('contract', function () {
@@ -132,12 +132,12 @@ suite('SocketHandler', function () {
             expect(sut.socket).to.be(mockSocket.object);
         });
 
-        test('should set own property gameListingProvider to injected object', function () {
-            expect(sut.gameListingProvider).to.be(mockGameListingProvider.object);
+        test('should set own property gameProvider to injected object', function () {
+            expect(sut.gameProvider).to.be(mockGameProvider.object);
         });
 
-        test('should set own property GameListingConstructor to injected object', function () {
-            expect(sut.GameListingConstructor).to.be(mockGameListingConstructor);
+        test('should set own property GameConstructor to injected object', function () {
+            expect(sut.GameConstructor).to.be(mockGameConstructor);
         });
 
         test('should set own property clientProvider to injected object', function () {
@@ -190,13 +190,13 @@ suite('SocketHandler', function () {
     });
 
     suite('newGame()', function () {
-        var newGameListing = new GameListing('testName', 2);
-        var persistedGameListing = new GameListing('testName', 2);
-        persistedGameListing.id = 0;
+        var newGame = new Game('testName', 2);
+        var persistedGame = new Game('testName', 2);
+        persistedGame.id = 0;
         var data = {name: 'testName', playerCount: 2};
 
         teardown(function () {
-            mockGameListingProvider.restore();
+            mockGameProvider.restore();
             mockSocket.restore();
         });
 
@@ -207,18 +207,18 @@ suite('SocketHandler', function () {
         });
 
         suite('collaboration', function () {
-            test('should create and persist new GameListing and inform clients via emit and callback', function (done) {
+            test('should create and persist new Game and inform clients via emit and callback', function (done) {
                 mockSocket.expects('to').once().withArgs('gamelist').returns(mockSocket.object);
-                mockSocket.expects('emit').once().withArgs('newGameCreated', persistedGameListing);
-                mockGameListingProvider.expects('save').once().withArgs(newGameListing).callsArgWith(1, persistedGameListing);
-                mockGameListingConstructor.withArgs('testName', 2).returns(newGameListing);
+                mockSocket.expects('emit').once().withArgs('newGameCreated', persistedGame);
+                mockGameProvider.expects('save').once().withArgs(newGame).callsArgWith(1, persistedGame);
+                mockGameConstructor.withArgs('testName', 2).returns(newGame);
 
                 sut.newGame(data, function (result) {
                     expect(result).to.be.an('object');
-                    expect(mockGameListingConstructor.calledWithNew()).to.be.ok();
-                    expect(mockGameListingConstructor.calledWithExactly('testName', 2)).to.be.ok();
+                    expect(mockGameConstructor.calledWithNew()).to.be.ok();
+                    expect(mockGameConstructor.calledWithExactly('testName', 2)).to.be.ok();
 
-                    mockGameListingProvider.verify();
+                    mockGameProvider.verify();
                     mockSocket.verify();
                     expect(mockSocket.object.flags.broadcast).to.be(true);
 
@@ -233,17 +233,17 @@ suite('SocketHandler', function () {
             sut.listGames(null, function () { done() });
         });
 
-        suite('collaboration with GameListingProvider', function () {
+        suite('collaboration with GameProvider', function () {
             test('should execute callback with games from provider', function (done) {
-                var expectedResult = new GameListing('testing', 2);
+                var expectedResult = new Game('testing', 2);
                 var check = function (result) {
                     expect(result).to.be(expectedResult);
                     done();
                 };
-                mockGameListingProvider.expects('findActive').once().withArgs(check).callsArgWith(0, expectedResult);
+                mockGameProvider.expects('findActive').once().withArgs(check).callsArgWith(0, expectedResult);
                 sut.listGames(null, check);
 
-                mockGameListingProvider.verify();
+                mockGameProvider.verify();
             });
         });
     });
@@ -259,7 +259,7 @@ suite('SocketHandler', function () {
             var newClient = new Client();
             var existingClient = new Client();
             existingClient.id = testId;
-            var activeGame = new GameListing('testGame', 2);
+            var activeGame = new Game('testGame', 2);
             activeGame.id = activeGameId;
             activeGame.players[1] = existingClient.id;
             activeGame.state = 'playing';
@@ -307,13 +307,13 @@ suite('SocketHandler', function () {
 
             test('client id found, no active game associated', function (done) {
                 mockClientProvider.expects('findById').once().withArgs(testId).callsArgWith(1, existingClient);
-                mockGameListingProvider.expects('findActiveByClientId').once().withArgs(testId).callsArgWith(1, []);
+                mockGameProvider.expects('findActiveByClientId').once().withArgs(testId).callsArgWith(1, []);
                 mockSocket.expects('emit').once().withArgs('gotoSplash', null);
                 mockSocket.expects('set').once().withArgs('clientId', testId).callsArg(2);;
 
                 sut.routeClient({id: testId}, function () {
                     mockClientProvider.verify();
-                    mockGameListingProvider.verify();
+                    mockGameProvider.verify();
                     mockSocket.verify();
                     done();
                 });
@@ -321,13 +321,13 @@ suite('SocketHandler', function () {
 
             test('client id found, active game associated', function (done) {
                 mockClientProvider.expects('findById').once().withArgs(testId).callsArgWith(1, existingClient);
-                mockGameListingProvider.expects('findActiveByClientId').once().withArgs(testId).callsArgWith(1, [activeGame]);
+                mockGameProvider.expects('findActiveByClientId').once().withArgs(testId).callsArgWith(1, [activeGame]);
                 mockSocket.expects('emit').once().withArgs('gotoGame', activeGame.id);
                 mockSocket.expects('set').once().withArgs('clientId', testId).callsArg(2);;
 
                 sut.routeClient({id: testId}, function () {
                     mockClientProvider.verify();
-                    mockGameListingProvider.verify();
+                    mockGameProvider.verify();
                     mockSocket.verify();
                     done();
                 });
@@ -336,14 +336,14 @@ suite('SocketHandler', function () {
             test('client id found, multiple active games associated', function (done) {
                 // This should never happen, but what is the expected behaviour if it does?
                 mockClientProvider.expects('findById').once().withArgs(testId).callsArgWith(1, existingClient);
-                mockGameListingProvider.expects('findActiveByClientId').once().withArgs(testId).callsArgWith(1, [activeGame, activeGame]);
+                mockGameProvider.expects('findActiveByClientId').once().withArgs(testId).callsArgWith(1, [activeGame, activeGame]);
 
                 mockSocket.expects('set').once().withArgs('clientId', testId).callsArg(2);;
 
                 sut.routeClient({id: testId}, function (err) {
                     expect(err).to.be('Error: Multiple active games associated with client id!');
                     mockClientProvider.verify();
-                    mockGameListingProvider.verify();
+                    mockGameProvider.verify();
                     mockSocket.verify();
                     done();
                 });
@@ -398,7 +398,7 @@ suite('SocketHandler', function () {
             var newClient = new Client();
             var existingClient = new Client();
             existingClient.id = testId;
-            var activeGame = new GameListing('testGame', 2);
+            var activeGame = new Game('testGame', 2);
             activeGame.id = activeGameId;
             activeGame.players[1] = existingClient.id;
             activeGame.state = 'playing';
