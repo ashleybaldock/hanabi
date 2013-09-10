@@ -3,6 +3,13 @@ var sinon = require('sinon');
 
 var Game = require('../lib/Game.js').Game;
 var PlayerInterface = require('../lib/PlayerInterface.js').PlayerInterface;
+var LifeTokens = require('../lib/LifeTokens.js').LifeTokens;
+var Fireworks = require('../lib/Fireworks.js').Fireworks;
+var Firework = require('../lib/Firework.js').Firework;
+var ClueTokens = require('../lib/ClueTokens.js').ClueTokens;
+var Discard = require('../lib/Discard.js').Discard;
+var Deck = require('../lib/Deck.js').Deck;
+var Hand = require('../lib/Hand.js').Hand;
 
 suite('Game', function () {
     var sut, sut2player, sut3player, sut4player, sut5player;
@@ -10,6 +17,7 @@ suite('Game', function () {
 
     setup(function () {
         console.log('Game setup');
+
         sut = new Game(name, playerCount);
         sut2player = new Game(name, 2);
         sut3player = new Game(name, 3);
@@ -31,14 +39,6 @@ suite('Game', function () {
         });
         test('should define playersReady() method', function () {
             expect(sut.playersReady).to.be.a('function');
-        });
-
-        test('should define playCard() method', function () {
-            expect(sut.playCard).to.be.a('function');
-        });
-
-        test('should define discard() method', function () {
-            expect(sut.discard).to.be.a('function');
         });
 
         test('should define giveClue() method', function () {
@@ -105,6 +105,9 @@ suite('Game', function () {
             expect(sut5player.hands[3].size).to.be(4);
             expect(sut5player.hands[4].size).to.be(4);
         });
+    });
+
+    suite('wireEvents()', function () {
     });
 
     suite('addPlayer()', function () {
