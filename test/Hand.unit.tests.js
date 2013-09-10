@@ -50,6 +50,7 @@ suite('Hand', function () {
             expect(sut.events).to.contain('cardDrawn');
             expect(sut.events).to.contain('discardCard');
             expect(sut.events).to.contain('restoreClue');
+            expect(sut.events).to.contain('turnComplete');
         });
     });
 
@@ -203,6 +204,20 @@ suite('Hand', function () {
                 done();
             });
         });
+
+        test('should send turnComplete event on success', function (done) {
+            var cards = [card4, card3, card2, card1];
+            var drawStub = sinon.stub(deck, 'drawCard', function (callback) {
+                callback(cards.pop());
+            });
+            var stub = sinon.stub(fireworks, 'play').callsArgWith(1, undefined);
+            var sendEventSpy = sinon.spy(sut, 'sendEvent');
+            sut.drawCard(function () {});
+            sut.playIndex(0, function (err) {
+                expect(sendEventSpy.calledWith('turnComplete', [])).to.be(true);
+                done();
+            });
+        });
     });
 
     suite('discardIndex()', function () {
@@ -286,6 +301,20 @@ suite('Hand', function () {
                 expect(err).to.be(undefined);
                 expect(drawStub.callCount).to.be(2);
                 expect(sut.cards[0]).to.be(card2);
+                done();
+            });
+        });
+
+        test('should emit turnComplete event', function (done) {
+            var cards = [card4, card3, card2, card1];
+            var drawStub = sinon.stub(deck, 'drawCard', function (callback) {
+                callback(cards.pop());
+            });
+            var sendEventSpy = sinon.spy(sut, 'sendEvent');
+            sut.drawCard(function () {});
+            sut.discardIndex(0, function (err) {
+                expect(err).to.be(undefined);
+                expect(sendEventSpy.calledWith('turnComplete', [])).to.be(true);
                 done();
             });
         });

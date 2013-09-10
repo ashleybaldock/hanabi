@@ -11,9 +11,11 @@ var Discard = require('../lib/Discard.js').Discard;
 var Deck = require('../lib/Deck.js').Deck;
 var Hand = require('../lib/Hand.js').Hand;
 var Card = require('../lib/Card.js').Card;
+var TurnCounter = require('../lib/TurnCounter.js').TurnCounter;
 
 suite('Game', function () {
     var sut, sut2player, sut3player, sut4player, sut5player,
+        turncounter, turncounterConstructor, enterEndgameSpy, takeTurnSpy,
         discard, discardConstructor, discardCardSpy,
         cluetokens, cluetokensConstructor, restoreClueSpy;
     var name = 'testGame', playerCount = 2;
@@ -28,11 +30,16 @@ suite('Game', function () {
         restoreClueSpy = sinon.spy(cluetokens, 'restoreClue');
         cluetokensConstructor = function () { return cluetokens; };
 
-        sut = new Game(name, playerCount, discardConstructor, cluetokensConstructor);
-        sut2player = new Game(name, 2, discardConstructor, cluetokensConstructor);
-        sut3player = new Game(name, 3, discardConstructor, cluetokensConstructor);
-        sut4player = new Game(name, 4, discardConstructor, cluetokensConstructor);
-        sut5player = new Game(name, 5, discardConstructor, cluetokensConstructor);
+        turncounter = new TurnCounter();
+        enterEndgameSpy = sinon.spy(turncounter, 'enterEndgame');
+        takeTurnSpy = sinon.spy(turncounter, 'takeTurn');
+        turncounterConstructor = sinon.stub().returns(turncounter);
+
+        sut = new Game(name, playerCount, discardConstructor, cluetokensConstructor, turncounterConstructor);
+        sut2player = new Game(name, 2, discardConstructor, cluetokensConstructor, turncounterConstructor);
+        sut3player = new Game(name, 3, discardConstructor, cluetokensConstructor, turncounterConstructor);
+        sut4player = new Game(name, 4, discardConstructor, cluetokensConstructor, turncounterConstructor);
+        sut5player = new Game(name, 5, discardConstructor, cluetokensConstructor, turncounterConstructor);
     });
 
     suite('contract', function () {
@@ -67,8 +74,8 @@ suite('Game', function () {
         test('should define onAllLivesLost event handler', function () {
             expect(sut.onAllLivesLost).to.be.a('function');
         });
-        test('should define onDeckExhausted event handler', function () {
-            expect(sut.onDeckExhausted).to.be.a('function');
+        test('should define onEndgameOver event handler', function () {
+            expect(sut.onEndgameOver).to.be.a('function');
         });
 
         test('should define events', function () {
@@ -118,97 +125,49 @@ suite('Game', function () {
 
         test('should wire discardCard event of hand up to Discard object', function () {
             var testCard = new Card('red', 1);
-            sut2player.hands[0].sendEvent('discardCard', [testCard]);
-            expect(discardCardSpy.calledWith(testCard)).to.be(true);
-            discardCardSpy.reset();
-            sut2player.hands[1].sendEvent('discardCard', [testCard]);
-            expect(discardCardSpy.calledWith(testCard)).to.be(true);
-            discardCardSpy.reset();
-            sut3player.hands[0].sendEvent('discardCard', [testCard]);
-            expect(discardCardSpy.calledWith(testCard)).to.be(true);
-            discardCardSpy.reset();
-            sut3player.hands[1].sendEvent('discardCard', [testCard]);
-            expect(discardCardSpy.calledWith(testCard)).to.be(true);
-            discardCardSpy.reset();
-            sut3player.hands[2].sendEvent('discardCard', [testCard]);
-            expect(discardCardSpy.calledWith(testCard)).to.be(true);
-            discardCardSpy.reset();
-            sut4player.hands[0].sendEvent('discardCard', [testCard]);
-            expect(discardCardSpy.calledWith(testCard)).to.be(true);
-            discardCardSpy.reset();
-            sut4player.hands[1].sendEvent('discardCard', [testCard]);
-            expect(discardCardSpy.calledWith(testCard)).to.be(true);
-            discardCardSpy.reset();
-            sut4player.hands[2].sendEvent('discardCard', [testCard]);
-            expect(discardCardSpy.calledWith(testCard)).to.be(true);
-            discardCardSpy.reset();
-            sut4player.hands[3].sendEvent('discardCard', [testCard]);
-            expect(discardCardSpy.calledWith(testCard)).to.be(true);
-            discardCardSpy.reset();
-            sut5player.hands[0].sendEvent('discardCard', [testCard]);
-            expect(discardCardSpy.calledWith(testCard)).to.be(true);
-            discardCardSpy.reset();
-            sut5player.hands[1].sendEvent('discardCard', [testCard]);
-            expect(discardCardSpy.calledWith(testCard)).to.be(true);
-            discardCardSpy.reset();
-            sut5player.hands[2].sendEvent('discardCard', [testCard]);
-            expect(discardCardSpy.calledWith(testCard)).to.be(true);
-            discardCardSpy.reset();
-            sut5player.hands[3].sendEvent('discardCard', [testCard]);
-            expect(discardCardSpy.calledWith(testCard)).to.be(true);
-            discardCardSpy.reset();
-            sut5player.hands[4].sendEvent('discardCard', [testCard]);
-            expect(discardCardSpy.calledWith(testCard)).to.be(true);
-            discardCardSpy.reset();
+            for (var i = 0; i < sut2player.hands.length; i++) {
+                sut2player.hands[i].sendEvent('discardCard', [testCard]);
+                expect(discardCardSpy.calledWith(testCard)).to.be(true);
+                discardCardSpy.reset();
+            }
         });
 
         test('should wire restoreClue event of hand up to ClueTokens object', function () {
-            sut2player.hands[0].sendEvent('restoreClue', []);
-            expect(restoreClueSpy.calledWith()).to.be(true);
-            restoreClueSpy.reset();
-            sut2player.hands[1].sendEvent('restoreClue', []);
-            expect(restoreClueSpy.calledWith()).to.be(true);
-            restoreClueSpy.reset();
-            sut3player.hands[0].sendEvent('restoreClue', []);
-            expect(restoreClueSpy.calledWith()).to.be(true);
-            restoreClueSpy.reset();
-            sut3player.hands[1].sendEvent('restoreClue', []);
-            expect(restoreClueSpy.calledWith()).to.be(true);
-            restoreClueSpy.reset();
-            sut3player.hands[2].sendEvent('restoreClue', []);
-            expect(restoreClueSpy.calledWith()).to.be(true);
-            restoreClueSpy.reset();
-            sut4player.hands[0].sendEvent('restoreClue', []);
-            expect(restoreClueSpy.calledWith()).to.be(true);
-            restoreClueSpy.reset();
-            sut4player.hands[1].sendEvent('restoreClue', []);
-            expect(restoreClueSpy.calledWith()).to.be(true);
-            restoreClueSpy.reset();
-            sut4player.hands[2].sendEvent('restoreClue', []);
-            expect(restoreClueSpy.calledWith()).to.be(true);
-            restoreClueSpy.reset();
-            sut4player.hands[3].sendEvent('restoreClue', []);
-            expect(restoreClueSpy.calledWith()).to.be(true);
-            restoreClueSpy.reset();
-            sut5player.hands[0].sendEvent('restoreClue', []);
-            expect(restoreClueSpy.calledWith()).to.be(true);
-            restoreClueSpy.reset();
-            sut5player.hands[1].sendEvent('restoreClue', []);
-            expect(restoreClueSpy.calledWith()).to.be(true);
-            restoreClueSpy.reset();
-            sut5player.hands[2].sendEvent('restoreClue', []);
-            expect(restoreClueSpy.calledWith()).to.be(true);
-            restoreClueSpy.reset();
-            sut5player.hands[3].sendEvent('restoreClue', []);
-            expect(restoreClueSpy.calledWith()).to.be(true);
-            restoreClueSpy.reset();
-            sut5player.hands[4].sendEvent('restoreClue', []);
-            expect(restoreClueSpy.calledWith()).to.be(true);
-            restoreClueSpy.reset();
+            for (var i = 0; i < sut2player.hands.length; i++) {
+                sut2player.hands[i].sendEvent('restoreClue', []);
+                expect(restoreClueSpy.calledWith()).to.be(true);
+                restoreClueSpy.reset();
+            }
         });
-    });
 
-    suite('wireEvents()', function () {
+        test('should wire turnComplete event of hand up to TurnCounter object', function () {
+            for (var i = 0; i < sut2player.hands.length; i++) {
+                sut2player.hands[i].sendEvent('turnComplete', []);
+                expect(takeTurnSpy.calledWith()).to.be(true);
+                takeTurnSpy.reset();
+            }
+        });
+
+        test('should wire Deck.deckExhausted event to TurnCounter.enterEndgame', function () {
+            sut2player.deck.sendEvent('deckExhausted', []);
+            expect(enterEndgameSpy.calledWith()).to.be(true);
+            enterEndgameSpy.reset();
+        });
+
+        test('should wire TurnCounter.endgameOver event to onEndgameOver', function () {
+            expect(sut.turncounter.wiredEvents()['endgameOver'][0].callback).to.be(sut.onEndgameOver);
+            expect(sut.turncounter.wiredEvents()['endgameOver'][0].context).to.be(sut);
+        });
+
+        test('should wire Fireworks.allFireworksComplete event to onAllFireworksComplete', function () {
+            expect(sut.fireworks.wiredEvents()['allFireworksComplete'][0].callback).to.be(sut.onAllFireworksComplete);
+            expect(sut.fireworks.wiredEvents()['allFireworksComplete'][0].context).to.be(sut);
+        });
+
+        test('should wire LifeTokens.allLivesLost event to onAllLivesLost', function () {
+            expect(sut.lifetokens.wiredEvents()['allLivesLost'][0].callback).to.be(sut.onAllLivesLost);
+            expect(sut.lifetokens.wiredEvents()['allLivesLost'][0].context).to.be(sut);
+        });
     });
 
     suite('addPlayer()', function () {

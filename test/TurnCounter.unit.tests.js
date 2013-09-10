@@ -40,18 +40,9 @@ suite('TurnCounter', function () {
     });
 
     suite('takeTurn()', function () {
-        test('should throw error if callback not a function', function () {
-            expect(function () {
-                sut.takeTurn();
-            }).to.throwException('Error: missing callback');
-        });
-
-        test('should increment turn counter', function (done) {
-            sut.takeTurn(function (turn) {
-                expect(turn).to.be(1);
-                expect(sut.turn).to.be(1);
-                done();
-            });
+        test('should increment turn counter', function () {
+            sut.takeTurn();
+            expect(sut.turn).to.be(1);
         });
     });
 
@@ -69,36 +60,31 @@ suite('TurnCounter', function () {
         });
 
         test('subsequent takeTurn() calls should decrement remaining', function () {
-            sut.takeTurn(function (turn) {
-                expect(turn).to.be(1);
-                sut.enterEndgame();
-                sut.takeTurn(function (turn) {
-                    expect(turn).to.be(2);
-                    expect(sut.remaining).to.be(playerCount - 1);
-                });
-            });
+            sut.takeTurn();
+            expect(sut.turn).to.be(1);
+            sut.enterEndgame();
+            sut.takeTurn();
+            expect(sut.turn).to.be(2);
+            expect(sut.remaining).to.be(playerCount - 1);
         });
 
         test('after playerCount takeTurns() calls an endgameOver event should be sent', function () {
             var callback = sinon.spy();
             var context = new Object();
             sut.registerForEvent('endgameOver', callback, context);
-            sut.takeTurn(function (turn) {
-                expect(turn).to.be(1);
-                sut.enterEndgame();
-                expect(callback.callCount).to.be(0);
-                sut.takeTurn(function (turn) {
-                    expect(turn).to.be(2);
-                    expect(sut.remaining).to.be(playerCount - 1);
-                    expect(callback.callCount).to.be(0);
-                    sut.takeTurn(function (turn) {
-                        expect(turn).to.be(3);
-                        expect(sut.remaining).to.be(playerCount - 2);
-                        expect(callback.calledOn(context)).to.be(true);
-                        expect(callback.calledWith(sut.turn)).to.be(true);
-                    });
-                });
-            });
+            sut.takeTurn();
+            expect(sut.turn).to.be(1);
+            sut.enterEndgame();
+            expect(callback.callCount).to.be(0);
+            sut.takeTurn();
+            expect(sut.turn).to.be(2);
+            expect(sut.remaining).to.be(playerCount - 1);
+            expect(callback.callCount).to.be(0);
+            sut.takeTurn();
+            expect(sut.turn).to.be(3);
+            expect(sut.remaining).to.be(playerCount - 2);
+            expect(callback.calledOn(context)).to.be(true);
+            expect(callback.calledWith(sut.turn)).to.be(true);
         });
     });
 });
