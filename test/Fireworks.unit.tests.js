@@ -3,14 +3,24 @@ var sinon = require('sinon');
 
 var Fireworks = require('../lib/Fireworks.js').Fireworks;
 var Firework = require('../lib/Firework.js').Firework;
+var LifeTokens = require('../lib/LifeTokens.js').LifeTokens;
+var Card = require('../lib/Card.js').Card;
 
 suite('Fireworks', function () {
     var sut, fireworkConstructor,
         redFirework, blueFirework, greenFirework, yellowFirework, whiteFirework,
         redFireworkRegSpy, blueFireworkRegSpy, greenFireworkRegSpy, yellowFireworkRegSpy,
-        whiteFireworkRegSpy;
+        whiteFireworkRegSpy, card1, card2, card3, card4, card5;
 
     setup(function () {
+        card1 = new Card('red', 1);
+        card2 = new Card('red', 2);
+        card3 = new Card('red', 3);
+        card4 = new Card('red', 4);
+        card5 = new Card('red', 5);
+
+        lifetokens = new LifeTokens(3);
+
         redFirework = new Firework('red');
         blueFirework = new Firework('blue');
         greenFirework = new Firework('green');
@@ -28,7 +38,7 @@ suite('Fireworks', function () {
         fireworkConstructor.withArgs('green').returns(greenFirework);
         fireworkConstructor.withArgs('yellow').returns(yellowFirework);
         fireworkConstructor.withArgs('white').returns(whiteFirework);
-        sut = new Fireworks(fireworkConstructor);
+        sut = new Fireworks(fireworkConstructor, lifetokens);
     });
 
     suite('contract', function () {
@@ -75,6 +85,14 @@ suite('Fireworks', function () {
     });
 
     suite('constructor', function () {
+        test('should wire up invalidPlay event on each firework to lifetokens.loseLife', function () {
+            expect(redFireworkRegSpy.calledWith('invalidPlay', lifetokens.loseLife, lifetokens)).to.be.ok();
+            expect(blueFireworkRegSpy.calledWith('invalidPlay', lifetokens.loseLife, lifetokens)).to.be.ok();
+            expect(greenFireworkRegSpy.calledWith('invalidPlay', lifetokens.loseLife, lifetokens)).to.be.ok();
+            expect(yellowFireworkRegSpy.calledWith('invalidPlay', lifetokens.loseLife, lifetokens)).to.be.ok();
+            expect(whiteFireworkRegSpy.calledWith('invalidPlay', lifetokens.loseLife, lifetokens)).to.be.ok();
+        });
+
         test('should populate fireworks using supplied constructor', function () {
             expect(redFireworkRegSpy.calledWith('fireworkComplete', sut.onFireworkComplete, sut)).to.be.ok();
             expect(blueFireworkRegSpy.calledWith('fireworkComplete', sut.onFireworkComplete, sut)).to.be.ok();
@@ -167,8 +185,8 @@ suite('Fireworks', function () {
 
         test('should call corresponding Firework.play() method passing callback', function (done) {
             redPlayStub = sinon.stub(redFirework, 'play').callsArgWith(1, undefined);
-            sut.play({colour: 'red', value: 2}, function (err) {
-                expect(redPlayStub.calledWith(2)).to.be.ok();
+            sut.play(card2, function (err) {
+                expect(redPlayStub.calledWith(card2)).to.be.ok();
                 expect(err).to.be(undefined);
                 done();
             });
@@ -176,10 +194,34 @@ suite('Fireworks', function () {
 
         test('should execute callback with error from Firework', function (done) {
             redPlayStub = sinon.stub(redFirework, 'play').callsArgWith(1, 'Error');
-            sut.play({colour: 'red', value: 2}, function (err) {
-                expect(redPlayStub.calledWith(2)).to.be.ok();
+            sut.play(card2, function (err) {
+                expect(redPlayStub.calledWith(card2)).to.be.ok();
                 expect(err).to.be('Error');
                 done();
+            });
+        });
+
+        test('should interact with Firework', function (done) {
+            var redSpy = sinon.spy(redFirework, 'sendEvent');
+            sut.play(card1, function (err) {
+                expect(err).to.be(undefined);
+                sut.play(card2, function (err) {
+                    expect(err).to.be(undefined);
+                    sut.play(card4, function (err) {
+                        expect(err).to.be('Error: Invalid play');
+                        sut.play(card3, function (err) {
+                            expect(err).to.be(undefined);
+                            sut.play(card4, function (err) {
+                                expect(err).to.be(undefined);
+                                sut.play(card5, function (err) {
+                                    expect(err).to.be(undefined);
+                                    expect(redSpy.calledWith('fireworkComplete')).to.be(true);
+                                    done();
+                                });
+                            });
+                        });
+                    });
+                });
             });
         });
     });

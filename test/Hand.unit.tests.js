@@ -4,19 +4,33 @@ var sinon = require('sinon');
 var Hand = require('../lib/Hand.js').Hand;
 var Deck = require('../lib/Deck.js').Deck;
 var Card = require('../lib/Card.js').Card;
+var Fireworks = require('../lib/Fireworks.js').Fireworks;
+var Firework = require('../lib/Firework.js').Firework;
+var Discard = require('../lib/Discard.js').Discard;
+var LifeTokens = require('../lib/LifeTokens.js').LifeTokens;
 
 suite('Hand', function () {
-    var sut;
+    var sut, deck, discard, fireworks;
     var cardCount = 4;
-    var deck = new Deck();
 
     setup(function () {
-        sut = new Hand(cardCount, deck);
+        deck = new Deck();
+        discard = new Discard();
+        fireworks = new Fireworks(Firework, new LifeTokens(3));
+        sut = new Hand(cardCount, deck, discard, fireworks);
     });
 
     suite('contract', function () {
         test('should define drawCard() method', function () {
             expect(sut.drawCard).to.be.a('function');
+        });
+
+        test('should define playIndex() method', function () {
+            expect(sut.playIndex).to.be.a('function');
+        });
+
+        test('should define discardIndex() method', function () {
+            expect(sut.discardIndex).to.be.a('function');
         });
 
         test('should define events', function () {
@@ -27,6 +41,8 @@ suite('Hand', function () {
     suite('constructor', function () {
         test('should set cardCount and deck properties', function () {
             expect(sut.deck()).to.be(deck);
+            expect(sut.discard()).to.be(discard);
+            expect(sut.fireworks()).to.be(fireworks);
             expect(sut.cards).to.have.length(0);
             expect(sut.size).to.be(cardCount);
         });
@@ -71,6 +87,122 @@ suite('Hand', function () {
             sut.drawCard(function (err) {
                 expect(err).to.be('Error: Deck exhausted');
                 stub.restore();
+                done();
+            });
+        });
+    });
+
+    suite('playIndex()', function () {
+        test('should execute callback with error if invalid index', function (done) {
+            sut.playIndex(0, function (err) {
+                expect(err).to.be('Error: invalid index');
+                done();
+            });
+        });
+
+        test('should call fireworks.play() with card at specified index', function (done) {
+            var card1 = new Card('red', 1);
+            var card2 = new Card('red', 2);
+            var card3 = new Card('red', 3);
+            var card4 = new Card('red', 4);
+            var cards = [card4, card3, card2, card1];
+            var drawStub = sinon.stub(deck, 'drawCard', function (callback) {
+                callback(cards.pop());
+            });
+            var stub = sinon.stub(fireworks, 'play').callsArgWith(1, undefined);
+            sut.drawCard(function () {});
+            expect(sut.cards).to.have.length(1);
+            expect(sut.cards[0]).to.be(card1);
+            console.log('after first drawCard sut.cards is: ' + JSON.stringify(sut.cards));
+            sut.playIndex(0, function (err) {
+                console.log('after playIndex call sut.cards is: ' + JSON.stringify(sut.cards));
+                expect(err).to.be(undefined);
+                expect(drawStub.callCount).to.be(2);
+                expect(stub.calledWith(card1)).to.be(true);
+                expect(sut.cards).to.have.length(1);
+                expect(sut.cards[0]).to.be(card2);
+                stub.restore();
+                drawStub.restore();
+                done();
+            });
+        });
+
+        test('should remove indexed card and add new one at the end of array', function (done) {
+            var card1 = new Card('red', 1);
+            var card2 = new Card('red', 2);
+            var card3 = new Card('red', 3);
+            var card4 = new Card('red', 4);
+            var newCard = new Card('blue', 5);
+            var cards = [newCard, card4, card3, card2, card1];
+            var drawStub = sinon.stub(deck, 'drawCard', function (callback) {
+                callback(cards.pop());
+            });
+            var stub = sinon.stub(fireworks, 'play').callsArgWith(1, undefined);
+            sut.drawCard(function () {});
+            sut.drawCard(function () {});
+            sut.drawCard(function () {});
+            sut.drawCard(function () {});
+            expect(sut.cards).to.have.length(4);
+            expect(sut.cards[0]).to.be(card1);
+            expect(sut.cards[1]).to.be(card2);
+            expect(sut.cards[2]).to.be(card3);
+            expect(sut.cards[3]).to.be(card4);
+            sut.playIndex(1, function (err) {
+                expect(err).to.be(undefined);
+                expect(stub.calledWith(card2)).to.be(true);
+                expect(sut.cards).to.have.length(4);
+                expect(sut.cards[0]).to.be(card1);
+                expect(sut.cards[1]).to.be(card3);
+                expect(sut.cards[2]).to.be(card4);
+                expect(sut.cards[3]).to.be(newCard);
+                done();
+            });
+        });
+
+        test('should discard if playIndex unsuccessful', function (done) {
+            var aCard = new Card('red', 1);
+            var drawStub = sinon.stub(deck, 'drawCard').callsArgWith(0, aCard);
+            var discardStub = sinon.stub(discard, 'discardCard').callsArgWith(1, undefined);
+            var stub = sinon.stub(fireworks, 'play').callsArgWith(1, 'Error: Invalid play');
+            sut.drawCard(function () {});
+            sut.playIndex(0, function (err) {
+                expect(err).to.be('Error: Invalid play');
+                expect(stub.calledWith(aCard)).to.be(true);
+                expect(discardStub.calledWith(aCard)).to.be(true);
+                done();
+            });
+        });
+
+        test('should decrement lives if unsuccessful', function (done) {
+            var aCard = new Card('red', 1);
+            var drawStub = sinon.stub(deck, 'drawCard').callsArgWith(0, aCard);
+            var discardStub = sinon.stub(discard, 'discardCard').callsArgWith(1, undefined);
+            var stub = sinon.stub(fireworks, 'play').callsArgWith(1, 'Error: Invalid play');
+            sut.drawCard(function () {});
+            sut.playIndex(0, function (err) {
+                expect(err).to.be('Error: Invalid play');
+                expect(stub.calledWith(aCard)).to.be(true);
+                expect(discardStub.calledWith(aCard)).to.be(true);
+                done();
+            });
+        });
+
+        test('should trigger drawCard() if successful', function (done) {
+            var card1 = new Card('red', 1);
+            var card2 = new Card('red', 2);
+            var card3 = new Card('red', 3);
+            var card4 = new Card('red', 4);
+            var cards = [card4, card3, card2, card1];
+            var drawStub = sinon.stub(deck, 'drawCard', function (callback) {
+                callback(cards.pop());
+            });
+            var stub = sinon.stub(fireworks, 'play').callsArgWith(1, undefined);
+            sut.drawCard(function () {});
+            sut.playIndex(0, function (err) {
+                expect(err).to.be(undefined);
+                expect(stub.calledWith(card1)).to.be(true);
+                expect(drawStub.callCount).to.be(2);
+                expect(sut.cards[0]).to.be(card2);
                 done();
             });
         });

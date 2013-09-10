@@ -2,11 +2,18 @@ var expect = require('expect.js');
 var sinon = require('sinon');
 
 var Firework = require('../lib/Firework.js').Firework;
+var Card = require('../lib/Card.js').Card;
 
 suite('Firework', function () {
-    var sut;
+    var sut, card1, card2, card3, card4, card5;
 
     setup(function () {
+        card1 = new Card('red', 1);
+        card2 = new Card('red', 2);
+        card3 = new Card('red', 3);
+        card4 = new Card('red', 4);
+        card5 = new Card('red', 5);
+
         sut = new Firework('red');
     });
 
@@ -27,7 +34,7 @@ suite('Firework', function () {
             expect(sut.play).to.be.a('function');
         });
 
-        test('play() should accept only Number as first argument', function (done) {
+        test('play() should accept only Card as first argument', function (done) {
             sut.play(undefined, function (err) {
                 expect(err).to.be('Error: Invalid argument');
                 done();
@@ -35,14 +42,21 @@ suite('Firework', function () {
         });
 
         test('play() should accept only values below 6', function (done) {
-            sut.play(6, function (err) {
+            sut.play(new Card('red', 6), function (err) {
                 expect(err).to.be('Error: Invalid argument');
                 done();
             });
         });
 
         test('play() should accept only values above 0', function (done) {
-            sut.play(0, function (err) {
+            sut.play(new Card('red', 0), function (err) {
+                expect(err).to.be('Error: Invalid argument');
+                done();
+            });
+        });
+
+        test('play() should accept only colours matching firework', function (done) {
+            sut.play(new Card('blue', 1), function (err) {
                 expect(err).to.be('Error: Invalid argument');
                 done();
             });
@@ -50,6 +64,7 @@ suite('Firework', function () {
 
         test('should define events', function () {
             expect(sut.events).to.contain('fireworkComplete');
+            expect(sut.events).to.contain('invalidPlay');
         });
     });
 
@@ -101,7 +116,7 @@ suite('Firework', function () {
         test('after correct play should show updated value', function (done) {
             sut.getValue(function (value) {
                 expect(value).to.be(0);
-                sut.play(1, function (err) {
+                sut.play(card1, function (err) {
                     expect(err).to.be(undefined);
                     sut.getValue(function (value) {
                         expect(value).to.be(1);
@@ -123,15 +138,19 @@ suite('Firework', function () {
             var callback = sinon.spy();
             var context = new Object();
             sut.registerForEvent('fireworkComplete', callback, context);
+            var invalidPlayCallback = sinon.spy();
+            sut.registerForEvent('invalidPlay', invalidPlayCallback, context);
             expect(sut.isComplete()).to.be(false);
             sut.getValue(function (value) {
                 expect(value).to.be(0);
-                sut.play(1, function (err) {
+                sut.play(card1, function (err) {
+                    expect(invalidPlayCallback.callCount).to.be(0);
                     expect(err).to.be(undefined);
                     expect(sut.isComplete()).to.be(false);
                     sut.getValue(function (value) {
                         expect(value).to.be(1);
-                        sut.play(2, function (err) {
+                        sut.play(card2, function (err) {
+                            expect(invalidPlayCallback.callCount).to.be(0);
                             expect(err).to.be(undefined);
                             expect(sut.isComplete()).to.be(false);
                             sut.getValue(function (value) {
@@ -149,8 +168,12 @@ suite('Firework', function () {
             var callback = sinon.spy();
             var context = new Object();
             sut.registerForEvent('fireworkComplete', callback, context);
-            sut.play(2, function (err) {
+            var invalidPlayCallback = sinon.spy();
+            sut.registerForEvent('invalidPlay', invalidPlayCallback, context);
+            sut.play(card2, function (err) {
                 expect(callback.callCount).to.be(0);
+                expect(invalidPlayCallback.callCount).to.be(1);
+                expect(invalidPlayCallback.calledWith(card2)).to.be(true);
                 expect(err).to.be('Error: Invalid play');
                 done();
             });
@@ -160,9 +183,13 @@ suite('Firework', function () {
             var callback = sinon.spy();
             var context = new Object();
             sut.registerForEvent('fireworkComplete', callback, context);
-            sut.play(1, function (err) {
+            var invalidPlayCallback = sinon.spy();
+            sut.registerForEvent('invalidPlay', invalidPlayCallback, context);
+            sut.play(card1, function (err) {
                 expect(err).to.be(undefined);
-                sut.play(1, function (err) {
+                sut.play(card1, function (err) {
+                    expect(invalidPlayCallback.callCount).to.be(1);
+                    expect(invalidPlayCallback.calledWith(card1)).to.be(true);
                     expect(callback.callCount).to.be(0);
                     expect(err).to.be('Error: Invalid play');
                     done();
@@ -174,12 +201,16 @@ suite('Firework', function () {
             var callback = sinon.spy();
             var context = new Object();
             sut.registerForEvent('fireworkComplete', callback, context);
-            sut.play(1, function (err) {
+            var invalidPlayCallback = sinon.spy();
+            sut.registerForEvent('invalidPlay', invalidPlayCallback, context);
+            sut.play(card1, function (err) {
                 expect(err).to.be(undefined);
-                sut.play(2, function (err) {
+                sut.play(card2, function (err) {
                     expect(err).to.be(undefined);
-                    sut.play(1, function (err) {
+                    sut.play(card1, function (err) {
                         expect(callback.callCount).to.be(0);
+                        expect(invalidPlayCallback.callCount).to.be(1);
+                        expect(invalidPlayCallback.calledWith(card1)).to.be(true);
                         expect(err).to.be('Error: Invalid play');
                         done();
                     });
@@ -192,7 +223,7 @@ suite('Firework', function () {
             var context = new Object();
             sut.registerForEvent('fireworkComplete', callback, context);
             sut.value = 4;
-            sut.play(5, function (err) {
+            sut.play(card5, function (err) {
                 expect(err).to.be(undefined);
                 expect(callback.calledOn(context)).to.be(true);
                 expect(callback.calledWithExactly('red')).to.be(true);
