@@ -3,6 +3,7 @@ var testUtil = require('./Utility.js');
 
 var dbConnectionString = process.env.DBCONNECTIONSTRING;
 var Game = require('../lib/Game.js').Game;
+var GameFactory = require('../lib/GameFactory.js').GameFactory;
 
 var implementations = [
     function () { return new (require('../lib/MemoryGameProvider.js').GameProvider)() }
@@ -93,7 +94,7 @@ suite('GameProvider.Interface implementations', function () {
 
             suite('persist tests', function () {
                 test('removeById() should remove previously created item', function (done) {
-                    sut.save(new Game('test1', 2), function (newListing) {
+                    sut.save(GameFactory('test1', 2), function (newListing) {
                         expect(newListing.id).to.be(0);
                         sut.findAll(function (result) {
                             expect(result.length).to.be(1);

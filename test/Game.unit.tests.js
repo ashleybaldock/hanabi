@@ -10,19 +10,29 @@ var ClueTokens = require('../lib/ClueTokens.js').ClueTokens;
 var Discard = require('../lib/Discard.js').Discard;
 var Deck = require('../lib/Deck.js').Deck;
 var Hand = require('../lib/Hand.js').Hand;
+var Card = require('../lib/Card.js').Card;
 
 suite('Game', function () {
-    var sut, sut2player, sut3player, sut4player, sut5player;
+    var sut, sut2player, sut3player, sut4player, sut5player,
+        discard, discardConstructor, discardCardSpy,
+        cluetokens, cluetokensConstructor, restoreClueSpy;
     var name = 'testGame', playerCount = 2;
 
     setup(function () {
         console.log('Game setup');
+        discard = new Discard();
+        discardCardSpy = sinon.spy(discard, 'discardCard');
+        discardConstructor = function () { return discard; };
 
-        sut = new Game(name, playerCount);
-        sut2player = new Game(name, 2);
-        sut3player = new Game(name, 3);
-        sut4player = new Game(name, 4);
-        sut5player = new Game(name, 5);
+        cluetokens = new ClueTokens();
+        restoreClueSpy = sinon.spy(cluetokens, 'restoreClue');
+        cluetokensConstructor = function () { return cluetokens; };
+
+        sut = new Game(name, playerCount, discardConstructor, cluetokensConstructor);
+        sut2player = new Game(name, 2, discardConstructor, cluetokensConstructor);
+        sut3player = new Game(name, 3, discardConstructor, cluetokensConstructor);
+        sut4player = new Game(name, 4, discardConstructor, cluetokensConstructor);
+        sut5player = new Game(name, 5, discardConstructor, cluetokensConstructor);
     });
 
     suite('contract', function () {
@@ -104,6 +114,97 @@ suite('Game', function () {
             expect(sut5player.hands[2].size).to.be(4);
             expect(sut5player.hands[3].size).to.be(4);
             expect(sut5player.hands[4].size).to.be(4);
+        });
+
+        test('should wire discardCard event of hand up to Discard object', function () {
+            var testCard = new Card('red', 1);
+            sut2player.hands[0].sendEvent('discardCard', [testCard]);
+            expect(discardCardSpy.calledWith(testCard)).to.be(true);
+            discardCardSpy.reset();
+            sut2player.hands[1].sendEvent('discardCard', [testCard]);
+            expect(discardCardSpy.calledWith(testCard)).to.be(true);
+            discardCardSpy.reset();
+            sut3player.hands[0].sendEvent('discardCard', [testCard]);
+            expect(discardCardSpy.calledWith(testCard)).to.be(true);
+            discardCardSpy.reset();
+            sut3player.hands[1].sendEvent('discardCard', [testCard]);
+            expect(discardCardSpy.calledWith(testCard)).to.be(true);
+            discardCardSpy.reset();
+            sut3player.hands[2].sendEvent('discardCard', [testCard]);
+            expect(discardCardSpy.calledWith(testCard)).to.be(true);
+            discardCardSpy.reset();
+            sut4player.hands[0].sendEvent('discardCard', [testCard]);
+            expect(discardCardSpy.calledWith(testCard)).to.be(true);
+            discardCardSpy.reset();
+            sut4player.hands[1].sendEvent('discardCard', [testCard]);
+            expect(discardCardSpy.calledWith(testCard)).to.be(true);
+            discardCardSpy.reset();
+            sut4player.hands[2].sendEvent('discardCard', [testCard]);
+            expect(discardCardSpy.calledWith(testCard)).to.be(true);
+            discardCardSpy.reset();
+            sut4player.hands[3].sendEvent('discardCard', [testCard]);
+            expect(discardCardSpy.calledWith(testCard)).to.be(true);
+            discardCardSpy.reset();
+            sut5player.hands[0].sendEvent('discardCard', [testCard]);
+            expect(discardCardSpy.calledWith(testCard)).to.be(true);
+            discardCardSpy.reset();
+            sut5player.hands[1].sendEvent('discardCard', [testCard]);
+            expect(discardCardSpy.calledWith(testCard)).to.be(true);
+            discardCardSpy.reset();
+            sut5player.hands[2].sendEvent('discardCard', [testCard]);
+            expect(discardCardSpy.calledWith(testCard)).to.be(true);
+            discardCardSpy.reset();
+            sut5player.hands[3].sendEvent('discardCard', [testCard]);
+            expect(discardCardSpy.calledWith(testCard)).to.be(true);
+            discardCardSpy.reset();
+            sut5player.hands[4].sendEvent('discardCard', [testCard]);
+            expect(discardCardSpy.calledWith(testCard)).to.be(true);
+            discardCardSpy.reset();
+        });
+
+        test('should wire restoreClue event of hand up to ClueTokens object', function () {
+            sut2player.hands[0].sendEvent('restoreClue', []);
+            expect(restoreClueSpy.calledWith()).to.be(true);
+            restoreClueSpy.reset();
+            sut2player.hands[1].sendEvent('restoreClue', []);
+            expect(restoreClueSpy.calledWith()).to.be(true);
+            restoreClueSpy.reset();
+            sut3player.hands[0].sendEvent('restoreClue', []);
+            expect(restoreClueSpy.calledWith()).to.be(true);
+            restoreClueSpy.reset();
+            sut3player.hands[1].sendEvent('restoreClue', []);
+            expect(restoreClueSpy.calledWith()).to.be(true);
+            restoreClueSpy.reset();
+            sut3player.hands[2].sendEvent('restoreClue', []);
+            expect(restoreClueSpy.calledWith()).to.be(true);
+            restoreClueSpy.reset();
+            sut4player.hands[0].sendEvent('restoreClue', []);
+            expect(restoreClueSpy.calledWith()).to.be(true);
+            restoreClueSpy.reset();
+            sut4player.hands[1].sendEvent('restoreClue', []);
+            expect(restoreClueSpy.calledWith()).to.be(true);
+            restoreClueSpy.reset();
+            sut4player.hands[2].sendEvent('restoreClue', []);
+            expect(restoreClueSpy.calledWith()).to.be(true);
+            restoreClueSpy.reset();
+            sut4player.hands[3].sendEvent('restoreClue', []);
+            expect(restoreClueSpy.calledWith()).to.be(true);
+            restoreClueSpy.reset();
+            sut5player.hands[0].sendEvent('restoreClue', []);
+            expect(restoreClueSpy.calledWith()).to.be(true);
+            restoreClueSpy.reset();
+            sut5player.hands[1].sendEvent('restoreClue', []);
+            expect(restoreClueSpy.calledWith()).to.be(true);
+            restoreClueSpy.reset();
+            sut5player.hands[2].sendEvent('restoreClue', []);
+            expect(restoreClueSpy.calledWith()).to.be(true);
+            restoreClueSpy.reset();
+            sut5player.hands[3].sendEvent('restoreClue', []);
+            expect(restoreClueSpy.calledWith()).to.be(true);
+            restoreClueSpy.reset();
+            sut5player.hands[4].sendEvent('restoreClue', []);
+            expect(restoreClueSpy.calledWith()).to.be(true);
+            restoreClueSpy.reset();
         });
     });
 

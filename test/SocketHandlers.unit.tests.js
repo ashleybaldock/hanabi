@@ -4,6 +4,7 @@ var SocketHandler = require('../lib/SocketHandler.js').SocketHandler;
 var GameProvider = require('../lib/MemoryGameProvider.js').GameProvider;
 var ClientProvider = require('../lib/MemoryClientProvider.js').ClientProvider;
 var Game = require('../lib/Game.js').Game;
+var GameFactory = require('../lib/GameFactory.js').GameFactory;
 var Client = require('../lib/Client.js').Client;
 
 // Methods our Socket mock should define (that we use)
@@ -27,7 +28,7 @@ suite('SocketHandler', function () {
     var sut
       , mockSocket
       , mockGameProvider
-      , mockGameConstructor
+      , mockGameFactory
       , mockClientProvider
       , mockClientConstructor;
 
@@ -36,9 +37,9 @@ suite('SocketHandler', function () {
         mockSocket.object.__defineGetter__('broadcast', function () { this.flags.broadcast = true; return this; });
         mockGameProvider = sinon.mock(new GameProvider());
         mockClientProvider = sinon.mock(new ClientProvider());
-        mockGameConstructor = sinon.stub();
+        mockGameFactory = sinon.stub();
         mockClientConstructor = sinon.stub();
-        sut = new SocketHandler(mockSocket.object, mockGameProvider.object, mockGameConstructor, mockClientProvider.object, mockClientConstructor);
+        sut = new SocketHandler(mockSocket.object, mockGameProvider.object, mockGameFactory, mockClientProvider.object, mockClientConstructor);
     });
 
     suite('contract', function () {
@@ -136,8 +137,8 @@ suite('SocketHandler', function () {
             expect(sut.gameProvider).to.be(mockGameProvider.object);
         });
 
-        test('should set own property GameConstructor to injected object', function () {
-            expect(sut.GameConstructor).to.be(mockGameConstructor);
+        test('should set own property GameFactory to injected object', function () {
+            expect(sut.GameFactory).to.be(mockGameFactory);
         });
 
         test('should set own property clientProvider to injected object', function () {
@@ -190,8 +191,8 @@ suite('SocketHandler', function () {
     });
 
     suite('newGame()', function () {
-        var newGame = new Game('testName', 2);
-        var persistedGame = new Game('testName', 2);
+        var newGame = GameFactory('testName', 2);
+        var persistedGame = GameFactory('testName', 2);
         persistedGame.id = 0;
         var data = {name: 'testName', playerCount: 2};
 
@@ -211,12 +212,11 @@ suite('SocketHandler', function () {
                 mockSocket.expects('to').once().withArgs('gamelist').returns(mockSocket.object);
                 mockSocket.expects('emit').once().withArgs('newGameCreated', persistedGame);
                 mockGameProvider.expects('save').once().withArgs(newGame).callsArgWith(1, persistedGame);
-                mockGameConstructor.withArgs('testName', 2).returns(newGame);
+                mockGameFactory.withArgs('testName', 2).returns(newGame);
 
                 sut.newGame(data, function (result) {
                     expect(result).to.be.an('object');
-                    expect(mockGameConstructor.calledWithNew()).to.be.ok();
-                    expect(mockGameConstructor.calledWithExactly('testName', 2)).to.be.ok();
+                    expect(mockGameFactory.calledWithExactly('testName', 2)).to.be.ok();
 
                     mockGameProvider.verify();
                     mockSocket.verify();
@@ -235,7 +235,7 @@ suite('SocketHandler', function () {
 
         suite('collaboration with GameProvider', function () {
             test('should execute callback with games from provider', function (done) {
-                var expectedResult = new Game('testing', 2);
+                var expectedResult = GameFactory('testing', 2);
                 var check = function (result) {
                     expect(result).to.be(expectedResult);
                     done();
@@ -259,7 +259,7 @@ suite('SocketHandler', function () {
             var newClient = new Client();
             var existingClient = new Client();
             existingClient.id = testId;
-            var activeGame = new Game('testGame', 2);
+            var activeGame = GameFactory('testGame', 2);
             activeGame.id = activeGameId;
             activeGame.players[1] = existingClient.id;
             activeGame.state = 'playing';
@@ -398,7 +398,7 @@ suite('SocketHandler', function () {
             var newClient = new Client();
             var existingClient = new Client();
             existingClient.id = testId;
-            var activeGame = new Game('testGame', 2);
+            var activeGame = GameFactory('testGame', 2);
             activeGame.id = activeGameId;
             activeGame.players[1] = existingClient.id;
             activeGame.state = 'playing';
