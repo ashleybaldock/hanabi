@@ -10,14 +10,27 @@ var Discard = require('../lib/Discard.js').Discard;
 var LifeTokens = require('../lib/LifeTokens.js').LifeTokens;
 
 suite('Hand', function () {
-    var sut, deck, discard, fireworks;
+    var sut, deck, discard, fireworks, lifetokens,
+        discardSpy, lifetokensSpy,
+        card1, card2, card3, card4;
     var cardCount = 4;
 
     setup(function () {
+        card1 = new Card('red', 1);
+        card2 = new Card('red', 2);
+        card3 = new Card('red', 3);
+        card4 = new Card('red', 4);
+
         deck = new Deck();
+
         discard = new Discard();
-        fireworks = new Fireworks(Firework, new LifeTokens(3));
-        sut = new Hand(cardCount, deck, discard, fireworks);
+        discardSpy = new sinon.spy(discard, 'discardCard');
+
+        lifetokens = new LifeTokens(3);
+        lifetokensSpy = new sinon.spy(lifetokens, 'loseLife');
+
+        fireworks = new Fireworks(Firework, lifetokens, discard);
+        sut = new Hand(cardCount, deck, fireworks);
     });
 
     suite('contract', function () {
@@ -35,13 +48,14 @@ suite('Hand', function () {
 
         test('should define events', function () {
             expect(sut.events).to.contain('cardDrawn');
+            expect(sut.events).to.contain('discardCard');
+            expect(sut.events).to.contain('restoreClue');
         });
     });
 
     suite('constructor', function () {
         test('should set cardCount and deck properties', function () {
             expect(sut.deck()).to.be(deck);
-            expect(sut.discard()).to.be(discard);
             expect(sut.fireworks()).to.be(fireworks);
             expect(sut.cards).to.have.length(0);
             expect(sut.size).to.be(cardCount);
@@ -159,39 +173,22 @@ suite('Hand', function () {
             });
         });
 
-        test('should discard if playIndex unsuccessful', function (done) {
-            var aCard = new Card('red', 1);
+        test('in collaboration with Fireworks should discard and lose life if playIndex unsuccessful', function (done) {
+            var aCard = new Card('red', 2);
             var drawStub = sinon.stub(deck, 'drawCard').callsArgWith(0, aCard);
-            var discardStub = sinon.stub(discard, 'discardCard').callsArgWith(1, undefined);
-            var stub = sinon.stub(fireworks, 'play').callsArgWith(1, 'Error: Invalid play');
+            var fireworksSpy = sinon.spy(fireworks, 'play');
             sut.drawCard(function () {});
             sut.playIndex(0, function (err) {
-                expect(err).to.be('Error: Invalid play');
-                expect(stub.calledWith(aCard)).to.be(true);
-                expect(discardStub.calledWith(aCard)).to.be(true);
-                done();
-            });
-        });
-
-        test('should decrement lives if unsuccessful', function (done) {
-            var aCard = new Card('red', 1);
-            var drawStub = sinon.stub(deck, 'drawCard').callsArgWith(0, aCard);
-            var discardStub = sinon.stub(discard, 'discardCard').callsArgWith(1, undefined);
-            var stub = sinon.stub(fireworks, 'play').callsArgWith(1, 'Error: Invalid play');
-            sut.drawCard(function () {});
-            sut.playIndex(0, function (err) {
-                expect(err).to.be('Error: Invalid play');
-                expect(stub.calledWith(aCard)).to.be(true);
-                expect(discardStub.calledWith(aCard)).to.be(true);
+                expect(fireworksSpy.calledWith(aCard)).to.be(true);
+                expect(discardSpy.callCount).to.be(1);
+                expect(discardSpy.calledWith(aCard)).to.be(true);
+                expect(lifetokensSpy.callCount).to.be(1);
+                expect(lifetokensSpy.calledWith(aCard)).to.be(true);
                 done();
             });
         });
 
         test('should trigger drawCard() if successful', function (done) {
-            var card1 = new Card('red', 1);
-            var card2 = new Card('red', 2);
-            var card3 = new Card('red', 3);
-            var card4 = new Card('red', 4);
             var cards = [card4, card3, card2, card1];
             var drawStub = sinon.stub(deck, 'drawCard', function (callback) {
                 callback(cards.pop());
@@ -201,6 +198,92 @@ suite('Hand', function () {
             sut.playIndex(0, function (err) {
                 expect(err).to.be(undefined);
                 expect(stub.calledWith(card1)).to.be(true);
+                expect(drawStub.callCount).to.be(2);
+                expect(sut.cards[0]).to.be(card2);
+                done();
+            });
+        });
+    });
+
+    suite('discardIndex()', function () {
+        test('should execute callback with error if invalid index', function (done) {
+            sut.discardIndex(0, function (err) {
+                expect(err).to.be('Error: invalid index');
+                done();
+            });
+        });
+
+        test('should remove specified card from cards', function (done) {
+            var cards = [card4, card3, card2, card1];
+            var drawStub = sinon.stub(deck, 'drawCard', function (callback) {
+                callback(cards.pop());
+            });
+            sut.drawCard(function () {});
+            expect(sut.cards).to.have.length(1);
+            sut.discardIndex(0, function (err) {
+                expect(err).to.be(undefined);
+                expect(sut.cards).to.have.length(1);
+                done();
+            });
+        });
+
+        test('should remove specified card from cards (in middle)', function (done) {
+            var cards = [card4, card3, card2, card1];
+            var drawStub = sinon.stub(deck, 'drawCard', function (callback) {
+                callback(cards.pop());
+            });
+            var sendEventSpy = sinon.spy(sut, 'sendEvent');
+            sut.drawCard(function () {});
+            sut.drawCard(function () {});
+            sut.drawCard(function () {});
+            expect(sut.cards).to.have.length(3);
+            sut.discardIndex(1, function (err) {
+                expect(err).to.be(undefined);
+                expect(sendEventSpy.calledWith('discardCard', [card2])).to.be(true);
+                expect(sut.cards).to.have.length(3);
+                expect(sut.cards[0]).to.be(card1);
+                expect(sut.cards[1]).to.be(card3);
+                expect(sut.cards[2]).to.be(card4);
+                done();
+            });
+        });
+
+        test('should emit cardDiscarded event', function (done) {
+            var cards = [card4, card3, card2, card1];
+            var drawStub = sinon.stub(deck, 'drawCard', function (callback) {
+                callback(cards.pop());
+            });
+            var sendEventSpy = sinon.spy(sut, 'sendEvent');
+            sut.drawCard(function () {});
+            sut.discardIndex(0, function (err) {
+                expect(err).to.be(undefined);
+                expect(sendEventSpy.calledWith('discardCard', [card1])).to.be(true);
+                done();
+            });
+        });
+
+        test('should emit clueRestored event', function (done) {
+            var cards = [card4, card3, card2, card1];
+            var drawStub = sinon.stub(deck, 'drawCard', function (callback) {
+                callback(cards.pop());
+            });
+            var sendEventSpy = sinon.spy(sut, 'sendEvent');
+            sut.drawCard(function () {});
+            sut.discardIndex(0, function (err) {
+                expect(err).to.be(undefined);
+                expect(sendEventSpy.calledWith('restoreClue', [])).to.be(true);
+                done();
+            });
+        });
+
+        test('should trigger drawCard() if successful', function (done) {
+            var cards = [card4, card3, card2, card1];
+            var drawStub = sinon.stub(deck, 'drawCard', function (callback) {
+                callback(cards.pop());
+            });
+            sut.drawCard(function () {});
+            sut.discardIndex(0, function (err) {
+                expect(err).to.be(undefined);
                 expect(drawStub.callCount).to.be(2);
                 expect(sut.cards[0]).to.be(card2);
                 done();

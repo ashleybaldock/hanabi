@@ -5,6 +5,7 @@ var Fireworks = require('../lib/Fireworks.js').Fireworks;
 var Firework = require('../lib/Firework.js').Firework;
 var LifeTokens = require('../lib/LifeTokens.js').LifeTokens;
 var Card = require('../lib/Card.js').Card;
+var Discard = require('../lib/Discard.js').Discard;
 
 suite('Fireworks', function () {
     var sut, fireworkConstructor,
@@ -20,6 +21,7 @@ suite('Fireworks', function () {
         card5 = new Card('red', 5);
 
         lifetokens = new LifeTokens(3);
+        discard = new Discard();
 
         redFirework = new Firework('red');
         blueFirework = new Firework('blue');
@@ -38,7 +40,7 @@ suite('Fireworks', function () {
         fireworkConstructor.withArgs('green').returns(greenFirework);
         fireworkConstructor.withArgs('yellow').returns(yellowFirework);
         fireworkConstructor.withArgs('white').returns(whiteFirework);
-        sut = new Fireworks(fireworkConstructor, lifetokens);
+        sut = new Fireworks(fireworkConstructor, lifetokens, discard);
     });
 
     suite('contract', function () {
@@ -91,6 +93,14 @@ suite('Fireworks', function () {
             expect(greenFireworkRegSpy.calledWith('invalidPlay', lifetokens.loseLife, lifetokens)).to.be.ok();
             expect(yellowFireworkRegSpy.calledWith('invalidPlay', lifetokens.loseLife, lifetokens)).to.be.ok();
             expect(whiteFireworkRegSpy.calledWith('invalidPlay', lifetokens.loseLife, lifetokens)).to.be.ok();
+        });
+
+        test('should wire up invalidPlay event on each firework to discard.discardCard', function () {
+            expect(redFireworkRegSpy.calledWith('invalidPlay', discard.discardCard, discard)).to.be.ok();
+            expect(blueFireworkRegSpy.calledWith('invalidPlay', discard.discardCard, discard)).to.be.ok();
+            expect(greenFireworkRegSpy.calledWith('invalidPlay', discard.discardCard, discard)).to.be.ok();
+            expect(yellowFireworkRegSpy.calledWith('invalidPlay', discard.discardCard, discard)).to.be.ok();
+            expect(whiteFireworkRegSpy.calledWith('invalidPlay', discard.discardCard, discard)).to.be.ok();
         });
 
         test('should populate fireworks using supplied constructor', function () {

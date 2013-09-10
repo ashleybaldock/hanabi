@@ -27,78 +27,48 @@ suite('Deck', function () {
 
     suite('constructor', function () {
         test('on construct should set contents', function () {
-            sut.getContents(function (cards) {
-                expect(cards).to.be.empty();
-            });
+            expect(sut.getContents()).to.be.empty();
         });
     });
 
     suite('getContents()', function () {
-        test('should throw error if callback not a function', function () {
-            expect(function () {
-                sut.getContents();
-            }).to.throwException('error: missing callback');
-        });
-
-        test('should return current contents', function (done) {
-            sut.getContents(function (contents) {
-                expect(contents).to.be.empty();
-                done();
-            });
-        });
-
-        test('should see correctly ordered contents after discarding', function (done) {
+        test('should see correctly ordered contents after discarding', function () {
             var card1 = new Card('white', 1);
             var card2 = new Card('white', 2);
-            sut.discardCard(card1, function () {
-                sut.discardCard(card2, function () {
-                    sut.getContents(function (contents) {
-                        expect(contents[0]).to.be(card1);
-                        expect(contents[1]).to.be(card2);
-                        done();
-                    });
-                });
-            });
+            sut.discardCard(card1);
+            sut.discardCard(card2);
+            var contents = sut.getContents();
+            expect(contents[0]).to.be(card1);
+            expect(contents[1]).to.be(card2);
         });
     });
 
     suite('discardCard()', function () {
-        test('should throw error if callback not a function', function () {
+        test('discarded card should have colour and value', function () {
             expect(function () {
-                sut.discardCard();
-            }).to.throwException('error: missing callback');
+                sut.discardCard(null)
+            }).to.throwError('Error: card invalid');
+            expect(function () {
+                sut.discardCard({})
+            }).to.throwError('Error: card invalid');
+            expect(function () {
+                sut.discardCard({value: 1})
+            }).to.throwError('Error: card invalid');
+            expect(function () {
+                sut.discardCard({colour: 'red'})
+            }).to.throwError('Error: card invalid');
         });
 
-        test('discarded card should have colour and value', function (done) {
-            sut.discardCard(null, function (err) {
-                expect(err).to.be('Error: card invalid');
-                sut.discardCard({}, function (err) {
-                    expect(err).to.be('Error: card invalid');
-                    sut.discardCard({value: 1}, function (err) {
-                        expect(err).to.be('Error: card invalid');
-                        sut.discardCard({colour: 'red'}, function (err) {
-                            expect(err).to.be('Error: card invalid');
-                            done();
-                        });
-                    });
-                });
-            });
-        });
-
-        test('should add discarded card to contents and send cardDiscarded event', function (done) {
+        test('should add discarded card to contents and send cardDiscarded event', function () {
             var card = new Card('red', 1);
             var callback = sinon.spy();
             var context = new Object();
             sut.registerForEvent('cardDiscarded', callback, context);
-            sut.discardCard(card, function (err) {
-                expect(err).to.be(undefined);
-                expect(callback.calledOn(context)).to.be(true);
-                expect(callback.calledWithExactly(card)).to.be(true);
-                sut.getContents(function (cards) {
-                    expect(cards[0]).to.be(card);
-                    done();
-                });
-            });
+            sut.discardCard(card);
+
+            expect(callback.calledOn(context)).to.be(true);
+            expect(callback.calledWithExactly(card)).to.be(true);
+            expect(sut.getContents()[0]).to.be(card);
         });
     });
 });
