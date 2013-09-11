@@ -8,3 +8,7 @@ exports.getFunctionName = function (func) {
     return /(\w+)\(/.exec(func.toString())[1];
 }
 
+exports.getObjectName = function (obj) {
+    if (typeof obj !== 'object' || obj === null) return false;
+    return obj.objectName;
+}

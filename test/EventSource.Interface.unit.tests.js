@@ -2,28 +2,39 @@ var expect = require('expect.js');
 var sinon = require('sinon');
 var testUtil = require('./Utility.js');
 
+var SocketHandler = require('../lib/SocketHandler.js').SocketHandler;
+var ClueTokens = require('../lib/ClueTokens.js').ClueTokens;
+var LifeTokens = require('../lib/LifeTokens.js').LifeTokens;
+var Deck = require('../lib/Deck.js').Deck;
+var Discard = require('../lib/Discard.js').Discard;
+var TurnCounter = require('../lib/TurnCounter.js').TurnCounter;
+var GameFactory = require('../lib/GameFactory.js').GameFactory;
+var Firework = require('../lib/Firework.js').Firework;
+var Fireworks = require('../lib/Fireworks.js').Fireworks;
+var Hand = require('../lib/Hand.js').Hand;
+
 // All classes that should implement this interface defined here
 var implementations = [
-    function () { return new (require('../lib/PlayerInterface.js').PlayerInterface)(); },
-    function () { return new (require('../lib/ClueTokens.js').ClueTokens)(); },
-    function () { return new (require('../lib/LifeTokens.js').LifeTokens)(); },
-    function () { return new (require('../lib/Deck.js').Deck)(); },
-    function () { return new (require('../lib/Discard.js').Discard)(); },
-    function () { return new (require('../lib/TurnCounter.js').TurnCounter)(); },
-    function () { return new (require('../lib/GameListing.js').GameListing)(); },
-    function () { return new (require('../lib/Firework.js').Firework)(); },
-    function () { return new (require('../lib/Fireworks.js').Fireworks)(); },
-    function () { return new (require('../lib/Hand.js').Hand)(); }
+    function () { return new SocketHandler(); },
+    function () { return new ClueTokens(); },
+    function () { return new LifeTokens(); },
+    function () { return new Deck(); },
+    function () { return new Discard(); },
+    function () { return new TurnCounter(); },
+    function () { return GameFactory(); },
+    function () { return new Firework(); },
+    function () { return new Fireworks(Firework, new LifeTokens(3), new Discard()); },
+    function () { return new Hand(); }
 ];
 
 suite('EventSource.Interface implementations', function () {
-    var implementation;
     for (var i = 0; i < implementations.length; i++) {
-        implementation = implementations[i];
-        suite(testUtil.getFunctionName(implementation), function () {
+
+        suite(testUtil.getObjectName(implementations[i]()), function () {
             var sut;
             var eventName = 'testEvent';
             var invalidEventName = 'invalidEvent';
+            var implementation = implementations[i];
 
             setup(function () {
                 sut = implementation();

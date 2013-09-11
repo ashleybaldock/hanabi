@@ -21,6 +21,7 @@ suite('TurnCounter', function () {
         });
 
         test('should define events', function () {
+            expect(sut.events).to.contain('endgameBegins');
             expect(sut.events).to.contain('endgameOver');
         });
     });
@@ -48,8 +49,12 @@ suite('TurnCounter', function () {
 
     suite('enterEndgame()', function () {
         test('should set endgame to true', function () {
+            var callback = sinon.spy();
+            var context = new Object();
+            sut.registerForEvent('endgameBegins', callback, context);
             sut.enterEndgame();
             expect(sut.endgame).to.be(true);
+            expect(callback.callCount).to.be(1);
         });
 
         test('should throw error if called twice', function () {

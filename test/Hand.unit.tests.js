@@ -8,10 +8,13 @@ var Fireworks = require('../lib/Fireworks.js').Fireworks;
 var Firework = require('../lib/Firework.js').Firework;
 var Discard = require('../lib/Discard.js').Discard;
 var LifeTokens = require('../lib/LifeTokens.js').LifeTokens;
+var ClueTokens = require('../lib/ClueTokens.js').ClueTokens;
 
 suite('Hand', function () {
-    var sut, deck, discard, fireworks, lifetokens, index,
-        discardSpy, lifetokensSpy,
+    var sut, deck, fireworks, index,
+        cluetokens, cluetokensStub,
+        discard, discardSpy,
+        lifetokens, lifetokensSpy,
         card1, card2, card3, card4;
     var cardCount = 4;
 
@@ -27,11 +30,14 @@ suite('Hand', function () {
         discard = new Discard();
         discardSpy = new sinon.spy(discard, 'discardCard');
 
+        cluetokens = new ClueTokens();
+        cluetokensStub = new sinon.stub(cluetokens, 'useClue');
+
         lifetokens = new LifeTokens(3);
         lifetokensSpy = new sinon.spy(lifetokens, 'loseLife');
 
         fireworks = new Fireworks(Firework, lifetokens, discard);
-        sut = new Hand(index, cardCount, deck, fireworks);
+        sut = new Hand(index, cardCount, deck, fireworks, cluetokens);
     });
 
     suite('contract', function () {
@@ -59,12 +65,17 @@ suite('Hand', function () {
             expect(sut.checkClueValidity).to.be.a('function');
         });
 
+        test('should define getClueMask() method', function () {
+            expect(sut.getClueMask).to.be.a('function');
+        });
+
         test('should define events', function () {
             expect(sut.events).to.contain('cardDrawn');
             expect(sut.events).to.contain('discardCard');
             expect(sut.events).to.contain('restoreClue');
             expect(sut.events).to.contain('turnComplete');
             expect(sut.events).to.contain('giveClue');
+            expect(sut.events).to.contain('clueReceived');
         });
     });
 
@@ -72,6 +83,7 @@ suite('Hand', function () {
         test('should set properties', function () {
             expect(sut.deck()).to.be(deck);
             expect(sut.fireworks()).to.be(fireworks);
+            expect(sut.cluetokens()).to.be(cluetokens);
             expect(sut.cards).to.have.length(0);
             expect(sut.size).to.be(cardCount);
             expect(sut.index).to.be(index);
@@ -100,6 +112,76 @@ suite('Hand', function () {
             expect(sut.checkClueValidity(0)).to.be(false);
             expect(sut.checkClueValidity(2)).to.be(false);
             expect(sut.checkClueValidity(5)).to.be(false);
+        });
+    });
+
+    suite('getClueMask()', function () {
+        test('should return array representing cards which conform to clue', function () {
+            sut.cards = [new Card('red', 1), new Card('blue', 3),
+                         new Card('green', 4), new Card('white', 4)];
+            expect(sut.getClueMask('red')).to.eql([
+                {colour: 'red', value: null},
+                {colour: null, value: null},
+                {colour: null, value: null},
+                {colour: null, value: null}]);
+            expect(sut.getClueMask('blue')).to.eql([
+                {colour: null, value: null},
+                {colour: 'blue', value: null},
+                {colour: null, value: null},
+                {colour: null, value: null}]);
+            expect(sut.getClueMask(4)).to.eql([
+                {colour: null, value: null},
+                {colour: null, value: null},
+                {colour: null, value: 4},
+                {colour: null, value: 4}]);
+        });
+    });
+
+    suite('receiveClue()', function () {
+        test('should check clue validity and execute callback with error if invalid', function () {
+            var spy = sinon.spy();
+            var stub = sinon.stub(sut, 'checkClueValidity').returns(false);
+
+            sut.receiveClue(1, 1, 'red', spy);
+
+            expect(stub.calledWith('red')).to.be(true);
+            expect(spy.calledWith('Error: clue invalid')).to.be(true);
+        });
+
+        test('should try to call useClue() on cluetokens, executing callback with error if this fails', function () {
+            var spy = sinon.spy();
+            var stub = sinon.stub(sut, 'checkClueValidity').returns(true);
+            cluetokensStub.callsArgWith(0, 'Error: No clues remain');
+
+            sut.receiveClue(1, 1, 'red', spy);
+
+            expect(cluetokensStub.callCount).to.be(1);
+            expect(spy.calledWith('Error: No clues remain')).to.be(true);
+        });
+
+        test('should emit clueReceived event and execute callback on success', function () {
+            var callback = sinon.spy();
+            var context = new Object();
+            sut.registerForEvent('clueReceived', callback, context);
+
+            var spy = sinon.spy();
+            var stub = sinon.stub(sut, 'checkClueValidity').returns(true);
+            cluetokensStub.callsArg(0);
+            var clueMask = [
+                {colour: null, value: null},
+                {colour: null, value: null},
+                {colour: null, value: 4},
+                {colour: null, value: 4}];
+            
+            var getClueMaskStub = sinon.stub(sut, 'getClueMask').returns(clueMask);
+
+            sut.receiveClue(1, 1, 'red', spy);
+
+            expect(cluetokensStub.callCount).to.be(1);
+            expect(getClueMaskStub.calledWith('red')).to.be(true);
+            expect(spy.calledWith()).to.be(true);;
+            expect(callback.calledOn(context)).to.be(true);
+            expect(callback.calledWith(1, 1, clueMask)).to.be(true);
         });
     });
 
