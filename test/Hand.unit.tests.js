@@ -51,6 +51,14 @@ suite('Hand', function () {
             expect(sut.giveClue).to.be.a('function');
         });
 
+        test('should define receiveClue() method', function () {
+            expect(sut.receiveClue).to.be.a('function');
+        });
+
+        test('should define checkClueValidity() method', function () {
+            expect(sut.checkClueValidity).to.be.a('function');
+        });
+
         test('should define events', function () {
             expect(sut.events).to.contain('cardDrawn');
             expect(sut.events).to.contain('discardCard');
@@ -67,6 +75,31 @@ suite('Hand', function () {
             expect(sut.cards).to.have.length(0);
             expect(sut.size).to.be(cardCount);
             expect(sut.index).to.be(index);
+        });
+    });
+
+    suite('checkClueValidity()', function () {
+        test('should return true if any card colour or value matches clue', function () {
+            sut.cards = [new Card('red', 1), new Card('blue', 3),
+                         new Card('green', 4), new Card('white', 4)];
+            expect(sut.checkClueValidity('red')).to.be(true);
+            expect(sut.checkClueValidity('blue')).to.be(true);
+            expect(sut.checkClueValidity('white')).to.be(true);
+            expect(sut.checkClueValidity(1)).to.be(true);
+            expect(sut.checkClueValidity(4)).to.be(true);
+        });
+
+        test('should return false if no card colour or value matches clue', function () {
+            sut.cards = [new Card('red', 1), new Card('blue', 3),
+                         new Card('green', 4), new Card('white', 4)];
+            expect(sut.checkClueValidity('yellow')).to.be(false);
+            expect(sut.checkClueValidity(undefined)).to.be(false);
+            expect(sut.checkClueValidity(null)).to.be(false);
+            expect(sut.checkClueValidity([])).to.be(false);
+            expect(sut.checkClueValidity({})).to.be(false);
+            expect(sut.checkClueValidity(0)).to.be(false);
+            expect(sut.checkClueValidity(2)).to.be(false);
+            expect(sut.checkClueValidity(5)).to.be(false);
         });
     });
 

@@ -176,6 +176,22 @@ suite('Game', function () {
         });
     });
 
+    suite('giveClueHandler()', function () {
+        test('should call decodeIndex() with first two arguments', function () {
+            var spy = sinon.spy(sut, 'decodeIndex');
+            sut.giveClueHandler(0, 1, 'red', function () {});
+            expect(spy.calledWith(0, 1)).to.be(true);
+        });
+
+        test('should call receiveClue() on hand index returned by decodeIndex()', function () {
+            var stub = sinon.stub(sut, 'decodeIndex').returns(0);
+            var spy = sinon.spy(sut.hands[0], 'receiveClue');
+            var func = function () {};
+            sut.giveClueHandler(0, 1, 'red', func);
+            expect(spy.calledWith(0, 0, 'red', func)).to.be(true);
+        });
+    });
+
     suite('addPlayer()', function () {
         test('should throw error if callback not a function', function () {
             expect(function () {
