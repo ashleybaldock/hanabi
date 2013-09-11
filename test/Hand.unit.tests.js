@@ -10,12 +10,13 @@ var Discard = require('../lib/Discard.js').Discard;
 var LifeTokens = require('../lib/LifeTokens.js').LifeTokens;
 
 suite('Hand', function () {
-    var sut, deck, discard, fireworks, lifetokens,
+    var sut, deck, discard, fireworks, lifetokens, index,
         discardSpy, lifetokensSpy,
         card1, card2, card3, card4;
     var cardCount = 4;
 
     setup(function () {
+        index = 0;
         card1 = new Card('red', 1);
         card2 = new Card('red', 2);
         card3 = new Card('red', 3);
@@ -30,7 +31,7 @@ suite('Hand', function () {
         lifetokensSpy = new sinon.spy(lifetokens, 'loseLife');
 
         fireworks = new Fireworks(Firework, lifetokens, discard);
-        sut = new Hand(cardCount, deck, fireworks);
+        sut = new Hand(index, cardCount, deck, fireworks);
     });
 
     suite('contract', function () {
@@ -46,20 +47,26 @@ suite('Hand', function () {
             expect(sut.discardIndex).to.be.a('function');
         });
 
+        test('should define giveClue() method', function () {
+            expect(sut.giveClue).to.be.a('function');
+        });
+
         test('should define events', function () {
             expect(sut.events).to.contain('cardDrawn');
             expect(sut.events).to.contain('discardCard');
             expect(sut.events).to.contain('restoreClue');
             expect(sut.events).to.contain('turnComplete');
+            expect(sut.events).to.contain('giveClue');
         });
     });
 
     suite('constructor', function () {
-        test('should set cardCount and deck properties', function () {
+        test('should set properties', function () {
             expect(sut.deck()).to.be(deck);
             expect(sut.fireworks()).to.be(fireworks);
             expect(sut.cards).to.have.length(0);
             expect(sut.size).to.be(cardCount);
+            expect(sut.index).to.be(index);
         });
     });
 
@@ -317,6 +324,21 @@ suite('Hand', function () {
                 expect(sendEventSpy.calledWith('turnComplete', [])).to.be(true);
                 done();
             });
+        });
+    });
+
+    suite('giveCard()', function () {
+        test('should emit giveClue event with index and callback', function () {
+            var cards = [card4, card3, card2, card1];
+            var drawStub = sinon.stub(deck, 'drawCard', function (callback) {
+                callback(cards.pop());
+            });
+            var sendEventSpy = sinon.spy(sut, 'sendEvent');
+            sut.drawCard(function () {});
+            var func = function () {};
+
+            sut.giveClue(0, 'red', func);
+            expect(sendEventSpy.calledWith('giveClue', [index, 0, 'red', func])).to.be(true);
         });
     });
 });

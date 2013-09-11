@@ -9,7 +9,6 @@ var Firework = require('../lib/Firework.js').Firework;
 var ClueTokens = require('../lib/ClueTokens.js').ClueTokens;
 var Discard = require('../lib/Discard.js').Discard;
 var Deck = require('../lib/Deck.js').Deck;
-var Hand = require('../lib/Hand.js').Hand;
 var Card = require('../lib/Card.js').Card;
 var TurnCounter = require('../lib/TurnCounter.js').TurnCounter;
 
@@ -58,8 +57,15 @@ suite('Game', function () {
             expect(sut.playersReady).to.be.a('function');
         });
 
-        test('should define giveClue() method', function () {
-            expect(sut.giveClue).to.be.a('function');
+        test('should define giveClueHandler() method', function () {
+            expect(sut.giveClueHandler).to.be.a('function');
+        });
+
+        test('should define encodeIndex function', function () {
+            expect(sut.encodeIndex).to.be.a('function');
+        });
+        test('should define decodeIndex function', function () {
+            expect(sut.decodeIndex).to.be.a('function');
         });
 
         test('should define onAllFireworksComplete event handler', function () {
@@ -296,6 +302,34 @@ suite('Game', function () {
                 });
             });
         });
+
+        test('should wire player.playCard event to hand.playIndex', function (done) {
+            var player = new PlayerInterface();
+            var stub = sinon.stub(player, 'getPlayerId').returns(0);
+            var regSpy = sinon.spy(player, 'registerForEvent');
+            sut.addPlayer(player, function (err) {
+                expect(regSpy.calledWith('playCard', sut.hands[0].playIndex, sut.hands[0])).to.be(true);
+                done();
+            });
+        });
+        test('should wire player.discardCard event to hand.discardIndex', function (done) {
+            var player = new PlayerInterface();
+            var stub = sinon.stub(player, 'getPlayerId').returns(0);
+            var regSpy = sinon.spy(player, 'registerForEvent');
+            sut.addPlayer(player, function (err) {
+                expect(regSpy.calledWith('discardCard', sut.hands[0].discardIndex, sut.hands[0])).to.be(true);
+                done();
+            });
+        });
+        test('should wire player.giveClue event to hand.giveClue', function (done) {
+            var player = new PlayerInterface();
+            var stub = sinon.stub(player, 'getPlayerId').returns(0);
+            var regSpy = sinon.spy(player, 'registerForEvent');
+            sut.addPlayer(player, function (err) {
+                expect(regSpy.calledWith('giveClue', sut.hands[0].giveClue, sut.hands[0])).to.be(true);
+                done();
+            });
+        });
     });
 
     suite('playersReady()', function () {
@@ -319,6 +353,45 @@ suite('Game', function () {
                 expect(sut.playersReady()).to.be(false);
                 done();
             });
+        });
+    });
+
+    suite('decodeIndex()', function () {
+        test('should return correct result for various inputs', function () {
+            expect(sut2player.decodeIndex(0, 1)).to.be(1);
+            expect(sut2player.decodeIndex(0, 0)).to.be(0);
+            expect(sut2player.decodeIndex(1, 1)).to.be(0);
+            expect(function () { sut2player.decodeIndex(2, 0); }).to.throwError('Error: Invalid fromIndex');
+            expect(function () { sut2player.decodeIndex(0, 2); }).to.throwError('Error: Invalid clientToIndex');
+            expect(function () { sut2player.decodeIndex(-1, 0); }).to.throwError('Error: Invalid fromIndex');
+            expect(function () { sut2player.decodeIndex(0, -1); }).to.throwError('Error: Invalid clientToIndex');
+            expect(sut5player.decodeIndex(1, 4)).to.be(0);
+            expect(sut5player.decodeIndex(4, 0)).to.be(4);
+            expect(sut5player.decodeIndex(4, 1)).to.be(0);
+            expect(sut5player.decodeIndex(4, 4)).to.be(3);
+        });
+    });
+
+    suite('encodeIndex()', function () {
+        test('should return correct result for various inputs', function () {
+            expect(sut2player.encodeIndex(0, 0)).to.be(0);
+            expect(sut2player.encodeIndex(0, 1)).to.be(1);
+            expect(sut2player.encodeIndex(1, 0)).to.be(1);
+            expect(function () { sut2player.encodeIndex(2, 0); }).to.throwError('Error: Invalid fromIndex');
+            expect(function () { sut2player.encodeIndex(0, 2); }).to.throwError('Error: Invalid toIndex');
+            expect(function () { sut2player.encodeIndex(-1, 0); }).to.throwError('Error: Invalid fromIndex');
+            expect(function () { sut2player.encodeIndex(0, -1); }).to.throwError('Error: Invalid toIndex');
+
+            expect(sut5player.encodeIndex(1, 0)).to.be(4);
+            expect(sut5player.encodeIndex(1, 1)).to.be(0);
+            expect(sut5player.encodeIndex(1, 2)).to.be(1);
+            expect(sut5player.encodeIndex(1, 3)).to.be(2);
+            expect(sut5player.encodeIndex(1, 4)).to.be(3);
+            expect(sut5player.encodeIndex(4, 0)).to.be(1);
+            expect(sut5player.encodeIndex(4, 1)).to.be(2);
+            expect(sut5player.encodeIndex(4, 2)).to.be(3);
+            expect(sut5player.encodeIndex(4, 3)).to.be(4);
+            expect(sut5player.encodeIndex(4, 4)).to.be(0);
         });
     });
 

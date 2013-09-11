@@ -4,6 +4,7 @@ var testUtil = require('./Utility.js');
 
 // All classes that should implement this interface defined here
 var implementations = [
+    function () { return new (require('../lib/PlayerInterface.js').PlayerInterface)(); },
     function () { return new (require('../lib/ClueTokens.js').ClueTokens)(); },
     function () { return new (require('../lib/LifeTokens.js').LifeTokens)(); },
     function () { return new (require('../lib/Deck.js').Deck)(); },
