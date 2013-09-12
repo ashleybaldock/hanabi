@@ -391,8 +391,7 @@ suite('SocketHandler', function () {
     });
 
     suite('joinGame()', function () {
-
-        suite('collaboration', function () {
+        test('should execute callback with error when client id not set on socket', function () {
             var testId = 1;
             var activeGameId = 1;
             var newClient = new Client();
@@ -402,15 +401,58 @@ suite('SocketHandler', function () {
             activeGame.id = activeGameId;
             activeGame.players[1] = existingClient.id;
             activeGame.state = 'playing';
+            sinon.stub(activeGame, 'addPlayer');
+            var spy = sinon.spy();
 
-            test('client id not set on socket', function (done) {
-                mockSocket.expects('get').once().withArgs('clientId').callsArgWith(1, null, testId);
+            mockSocket.expects('get').once().withArgs('clientId').callsArgWith(1, null, null);
 
-                sut.joinGame({id: testId}, function () {
-                    mockSocket.verify();
-                    done();
-                });
-            });
+            sut.joinGame({id: testId}, spy);
+
+            mockSocket.verify();
+            mockGameProvider.verify();
+            expect(spy.calledWith('Error: clientId not set on socket, call routeClient first!')).to.be(true);
+        });
+
+        test('should execute callback with error when game not found', function () {
+            var testId = 1;
+            var activeGameId = 1;
+            var newClient = new Client();
+            var existingClient = new Client();
+            existingClient.id = testId;
+            var activeGame = GameFactory('testGame', 2);
+            activeGame.id = activeGameId;
+            activeGame.players[1] = existingClient.id;
+            activeGame.state = 'playing';
+            sinon.stub(activeGame, 'addPlayer');
+            var spy = sinon.spy();
+
+            mockSocket.expects('get').once().withArgs('clientId').callsArgWith(1, null, testId);
+            mockGameProvider.expects('findById').once().withArgs(testId).callsArgWith(1, undefined);
+
+            sut.joinGame({id: testId}, spy);
+
+            mockSocket.verify();
+            expect(spy.calledWith('Error: No game with that id could be found')).to.be(true);
+        });
+
+        test('should execute happy path correctly', function () {
+            var testId = 1;
+            var activeGameId = 1;
+            var activeGame = GameFactory('testGame', 2);
+            activeGame.id = activeGameId;
+            activeGame.state = 'playing';
+            sinon.stub(activeGame, 'addPlayer').callsArgWith(1, undefined);
+            var spy = sinon.spy();
+
+            mockSocket.expects('get').once().withArgs('clientId').callsArgWith(1, null, testId);
+            mockGameProvider.expects('findById').once().withArgs(testId).callsArgWith(1, activeGame);
+
+            sut.joinGame({id: testId}, spy);
+
+            mockSocket.verify();
+            mockGameProvider.verify();
+            expect(activeGame.addPlayer.calledWith(sut, spy)).to.be(true);
+            expect(spy.calledWith()).to.be(true);
         });
     });
 });

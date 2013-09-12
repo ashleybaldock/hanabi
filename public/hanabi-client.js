@@ -205,6 +205,7 @@ YUI().use('event-base', 'event-resize', 'node', function (Y) {
         var splash = Y.one('#splash');
         var newgame = Y.one('#new_game');
         var gamelist = Y.one('#game_list');
+        var waitingforplayers = Y.one('#waiting_for_players');
         var quit = Y.one('#menu_quit');
         var rules = Y.one('#menu_rules');
         var about = Y.one('#menu_about');
@@ -242,16 +243,26 @@ YUI().use('event-base', 'event-resize', 'node', function (Y) {
 
         // Game events from server
         socket.on('gameReady', function (data) {
+            // Hide waiting for players panel
+            hide_pane(waitingforplayers);
         });
         socket.on('takeTurn', function (data) {
+            // Display message indicating turn
+            // TODO do this for all players, add playerIndex to takeTurn event
+            Y.one('#player1').addClass('highlighted');
         });
         socket.on('cardDrawn', function (data) {
+            Y.one('#player1').removeClass('highlighted');
+            // Update the specified Hand to add a card at the slot required
         });
         socket.on('cardPlayed', function (data) {
+            Y.one('#player1').removeClass('highlighted');
         });
         socket.on('clueGiven', function (data) {
+            Y.one('#player1').removeClass('highlighted');
         });
         socket.on('cardDiscarded', function (data) {
+            Y.one('#player1').removeClass('highlighted');
         });
         socket.on('clueUsed', function (data) {
         });
@@ -325,6 +336,7 @@ YUI().use('event-base', 'event-resize', 'node', function (Y) {
                         console.log('joinGame result: ' + JSON.stringify(result));
                         if (result === undefined) {
                             hide_pane(newgame);
+                            show_pane(waitingforplayers);
                         } else {
                             console.log('Error: joinGame call failed with: ' + JSON.stringify(result));
                             // Error + back to splash
@@ -354,6 +366,7 @@ YUI().use('event-base', 'event-resize', 'node', function (Y) {
                 if (result === undefined) {
                     Server.unsubscribeGameList();
                     hide_pane(gamelist);
+                    show_pane(waitingforplayers);
                 } else {
                     // Error + back to game listing
                     console.log('Error: joinGame call failed with: ' + JSON.stringify(result));

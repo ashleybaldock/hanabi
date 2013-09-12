@@ -75,6 +75,10 @@ html, body, div, ul, li, p, img, h1, h2, h3, h4, h5, h6 {
     position: absolute;
     text-align: center;
 }
+.player.highlighted {
+    background: #FFFF99;
+    box-shadow: 0px 1px 10px 0.5px rgb(255, 255, 153);
+}
 #fireworks, #gubbins {
     display: table;
     margin: 10px auto;

@@ -155,11 +155,21 @@ suite('server.js', function () {
             });
         });
 
-        test('should callback with undefined on success', function (done) {
+        test('should join game created by another client successfully', function (done) {
             client1.emit('routeClient', {id: null}, function (err) {
-                client1.emit('joinGame', game, function (err) {
-                    expect(err).to.be(undefined);
-                    done();
+                expect(err).to.be(undefined);
+                client1.emit('newGame', {
+                    name: 'testGame',
+                    playerCount: 2
+                }, function (result) {
+                    expect(result).to.be.an('object');
+                    client2.emit('routeClient', {id: null}, function (err) {
+                        expect(err).to.be(undefined);
+                        client2.emit('joinGame', result, function (err) {
+                            expect(err).to.be(undefined);
+                            done();
+                        });
+                    });
                 });
             });
         });

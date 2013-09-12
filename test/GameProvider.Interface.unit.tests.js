@@ -47,6 +47,18 @@ suite('GameProvider.Interface implementations', function () {
                     });
                 });
 
+                test('should define findById() method', function() {
+                    expect(sut.findById).to.be.a('function');
+                });
+
+                test('findById() should throw error if callback not a function', function() {
+                    expect(function () {
+                        sut.findById(null);
+                    }).to.throwException(function (ex) {
+                        expect(ex).to.be('callback is not a function!');
+                    });
+                });
+
                 test('should define findActiveByClientId() method', function() {
                     expect(sut.findActiveByClientId).to.be.a('function');
                 });
