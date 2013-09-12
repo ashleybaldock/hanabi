@@ -3,6 +3,11 @@ html, body, div, ul, li, p, img, h1, h2, h3, h4, h5, h6 {
     margin: 0px;
     border: 0px none;
     padding: 0px;
+    font-family: Verdana,Arial,Helvetica,sans-serif;
+}
+
+h1 {
+    font-size: 14pt;
 }
 
 #menu {
