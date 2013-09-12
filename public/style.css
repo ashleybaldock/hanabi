@@ -64,6 +64,9 @@ html, body, div, ul, li, p, img, h1, h2, h3, h4, h5, h6 {
 }
 .panel h1 {
 }
+.panel table tr.highlighted {
+    background-color: #FFFF99;
+}
 
 #board, .player {
     border: 2px solid #606060;

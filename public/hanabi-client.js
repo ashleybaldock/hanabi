@@ -36,27 +36,33 @@ socket.on('setClientId', function (data) {
 // Methods to communicate with the server
 var Server = {
     setClientName: function (name, callback) {
+        console.log('setClientName call to server');
         socket.emit('setClientName', {
             id: LocalStorage.get_clientId(),
             name: name
         }, callback);
     },
     newGame: function (name, playerCount, callback) {
+        console.log('newGame call to server');
         socket.emit('newGame', {
             'name': name,
             'playerCount': playerCount
         }, callback);
     },
     subscribeGameList: function (callback) {
+        console.log('subscribeGameList call to server');
         socket.emit('subscribeGameList', null, callback);
     },
     unsubscribeGameList: function (callback) {
+        console.log('unsubscribeGameList call to server');
         socket.emit('unsubscribeGameList', null, callback);
     },
     listGames: function (callback) {
+        console.log('listGames call to server');
         socket.emit('listGames', null, callback);
     },
     joinGame: function (game, callback) {
+        console.log('joinGame call to server');
         socket.emit('joinGame', game, callback);
     }
 }
@@ -234,6 +240,30 @@ YUI().use('event-base', 'event-resize', 'node', function (Y) {
             show_pane(newgame);
         });
 
+        // Game events from server
+        socket.on('gameReady', function (data) {
+        });
+        socket.on('takeTurn', function (data) {
+        });
+        socket.on('cardDrawn', function (data) {
+        });
+        socket.on('cardPlayed', function (data) {
+        });
+        socket.on('clueGiven', function (data) {
+        });
+        socket.on('cardDiscarded', function (data) {
+        });
+        socket.on('clueUsed', function (data) {
+        });
+        socket.on('clueRestored', function (data) {
+        });
+        socket.on('lifeLost', function (data) {
+        });
+        socket.on('enterEndgame', function (data) {
+        });
+        socket.on('deckExhausted', function (data) {
+        });
+
         // Updates the game list display
         socket.on('gameCreated', function (data) {
         });
@@ -245,7 +275,30 @@ YUI().use('event-base', 'event-resize', 'node', function (Y) {
             e.preventDefault(); e.stopPropagation();
             hide_pane(splash);
             Server.listGames(function (list) {
-                // Update pane with game list
+                console.log('retrieved list of games from server:');
+                console.log(JSON.stringify(list));
+                var table = gamelist.one('table');
+                var gameIdField = gamelist.one('#game_list_id');
+                for (var i = 0; i < list.length; i++) {
+                    (function () {
+                        var item = list[i];
+                        var id = Y.Node.create('<td>' + item.id + '</td>');
+                        var name = Y.Node.create('<td>' + item.name + '</td>');
+                        var count = Y.Node.create('<td>' + item.playerCount + '</td>');
+                        var state = Y.Node.create('<td>' + item.state + '</td>');
+                        var newnode = Y.Node.create('<tr />');
+                        newnode.appendChild(id);
+                        newnode.appendChild(name);
+                        newnode.appendChild(count);
+                        newnode.appendChild(state);
+                        newnode.on('click', function (e) {
+                            table.all('tr').removeClass('highlighted');
+                            newnode.addClass('highlighted');
+                            gameIdField.set('value', item.id);
+                        });
+                        table.appendChild(newnode);
+                    })();
+                }
             });
             // Subscribe to list events to see changes
             Server.subscribeGameList();
@@ -270,7 +323,7 @@ YUI().use('event-base', 'event-resize', 'node', function (Y) {
                     Server.joinGame(result, function (result) {
                         // TODO implement joinGame
                         console.log('joinGame result: ' + JSON.stringify(result));
-                        if (result === true) {
+                        if (result === undefined) {
                             hide_pane(newgame);
                         } else {
                             console.log('Error: joinGame call failed with: ' + JSON.stringify(result));
@@ -295,13 +348,15 @@ YUI().use('event-base', 'event-resize', 'node', function (Y) {
             // TODO attempt to join game in question
             // Then jump to game in progress
             // TODO select game from list (GameListing object)
-            var selectedGame;
-            Server.joinGame(selectedGame, function (result) {
-                if (result === true) {
+            var selectedGame = gamelist.one('#game_list_id').get('value');
+            Server.joinGame({id: selectedGame}, function (result) {
+                console.log('joinGame result: ' + JSON.stringify(result));
+                if (result === undefined) {
                     Server.unsubscribeGameList();
                     hide_pane(gamelist);
                 } else {
                     // Error + back to game listing
+                    console.log('Error: joinGame call failed with: ' + JSON.stringify(result));
                 }
             });
         });

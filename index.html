@@ -45,8 +45,8 @@
                     <option value="5">5</option>
                 </select>
             </div>
-            <button id="new_game_cancel">Cancel</button>
             <button id="new_game_create">Create Game</button>
+            <button id="new_game_cancel">Cancel</button>
         </form>
     </div>
 </div>
@@ -54,10 +54,18 @@
 <div class="panel" id="game_list">
     <h1>Games in progress</h1>
     <div>
-        List of games...
+        <table>
+            <tr>
+                <th>Id</th>
+                <th>Name</th>
+                <th>Max players</th>
+                <th>Status</th>
+            </tr>
+        </table>
         <form>
-            <button id="game_list_cancel">Cancel</button>
+            <input id="game_list_id" type="hidden" name="game_id" value="" />
             <button id="game_list_join">Join</button>
+            <button id="game_list_cancel">Cancel</button>
         </form>
     </div>
 </div>
