@@ -96,6 +96,9 @@ suite('Game', function () {
         test('should define onEndgameOver event handler', function () {
             expect(sut.onEndgameOver).to.be.a('function');
         });
+        test('should define onNextTurn event handler', function () {
+            expect(sut.onNextTurn).to.be.a('function');
+        });
 
         test('should define events', function () {
             expect(sut.events).to.contain('playerJoined');
@@ -159,14 +162,6 @@ suite('Game', function () {
             }
         });
 
-        test('should wire turnComplete event of hand up to TurnCounter object', function () {
-            for (var i = 0; i < sut2player.hands.length; i++) {
-                sut2player.hands[i].sendEvent('turnComplete', []);
-                expect(takeTurnSpy.calledWith()).to.be(true);
-                takeTurnSpy.reset();
-            }
-        });
-
         test('should wire Deck.deckExhausted event to TurnCounter.enterEndgame', function () {
             sut2player.deck.sendEvent('deckExhausted', []);
             expect(enterEndgameSpy.calledWith()).to.be(true);
@@ -186,6 +181,36 @@ suite('Game', function () {
         test('should wire LifeTokens.allLivesLost event to onAllLivesLost', function () {
             expect(sut.lifetokens.wiredEvents()['allLivesLost'][0].callback).to.be(sut.onAllLivesLost);
             expect(sut.lifetokens.wiredEvents()['allLivesLost'][0].context).to.be(sut);
+        });
+    });
+
+    suite('onNextTurn()', function () {
+        test('should call moveObserver() on next index player', function () {
+            var player1 = new PlayerInterface();
+            var player2 = new PlayerInterface();
+            sinon.stub(player1, 'getPlayerId').returns(0);
+            sinon.stub(player2, 'getPlayerId').returns(1);
+            sut2player.addPlayer(player1, function (err) {});
+            sut2player.addPlayer(player2, function (err) {});
+            var spy1 = sinon.spy(sut2player.players[0], 'moveObserver');
+            var spy2 = sinon.spy(sut2player.players[1], 'moveObserver');
+            sut2player.current = 0;
+            sut2player.onNextTurn();
+            expect(spy2.calledWith()).to.be(true);
+        });
+
+        test('should call moveObserver() on next index player (array wrap)', function () {
+            var player1 = new PlayerInterface();
+            var player2 = new PlayerInterface();
+            sinon.stub(player1, 'getPlayerId').returns(0);
+            sinon.stub(player2, 'getPlayerId').returns(1);
+            sut2player.addPlayer(player1, function (err) {});
+            sut2player.addPlayer(player2, function (err) {});
+            var spy1 = sinon.spy(sut2player.players[0], 'moveObserver');
+            var spy2 = sinon.spy(sut2player.players[1], 'moveObserver');
+            sut2player.current = 1;
+            sut2player.onNextTurn();
+            expect(spy1.calledWith()).to.be(true);
         });
     });
 
@@ -328,6 +353,16 @@ suite('Game', function () {
             var regSpy = sinon.spy(player, 'registerForEvent');
             sut.addPlayer(player, function (err) {
                 expect(regSpy.calledWith('playCard', sut.hands[0].playIndex, sut.hands[0])).to.be(true);
+                done();
+            });
+        });
+
+        test('should wire sut.gameReady event to player.readyObserver', function (done) {
+            var player = new PlayerInterface();
+            var stub = sinon.stub(player, 'getPlayerId').returns(0);
+            var regSpy = sinon.spy(sut, 'registerForEvent');
+            sut.addPlayer(player, function (err) {
+                expect(regSpy.calledWith('gameReady', player.readyObserver, player)).to.be(true);
                 done();
             });
         });

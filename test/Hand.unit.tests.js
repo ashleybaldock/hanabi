@@ -313,6 +313,17 @@ suite('Hand', function () {
             });
         });
 
+        test('should execute callback with error if play unsuccessful', function (done) {
+            var aCard = new Card('red', 2);
+            var drawStub = sinon.stub(deck, 'drawCard').callsArgWith(0, aCard);
+            var playStub = sinon.stub(fireworks, 'play').callsArgWith(1, 'Error: Invalid play');
+            sut.drawCard(function () {});
+            sut.playIndex(0, function (err) {
+                expect(err).to.be('Error: Invalid play');
+                done();
+            });
+        });
+
         test('should emit cardPlayed event if successful', function (done) {
             var cardIndex = 0;
             var cards = [card4, card3, card2, card1];

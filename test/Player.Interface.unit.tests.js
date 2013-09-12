@@ -27,6 +27,9 @@ suite('Player.Interface implementations', function () {
                     expect(sut.getPlayerId).to.be.a('function');
                 });
 
+                test('should define readyObserver() method', function () {
+                    expect(sut.readyObserver).to.be.a('function');
+                });
                 test('should define moveObserver() method', function () {
                     expect(sut.moveObserver).to.be.a('function');
                 });
