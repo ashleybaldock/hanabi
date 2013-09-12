@@ -115,10 +115,10 @@ suite('Game', function () {
         });
 
         test('should init players with correct number of slots', function () {
-            expect(sut2player.players).to.have.length(2);
-            expect(sut3player.players).to.have.length(3);
-            expect(sut4player.players).to.have.length(4);
-            expect(sut5player.players).to.have.length(5);
+            expect(sut2player.players()).to.have.length(2);
+            expect(sut3player.players()).to.have.length(3);
+            expect(sut4player.players()).to.have.length(4);
+            expect(sut5player.players()).to.have.length(5);
         });
 
         test('should init hands with correct number of slots', function () {
@@ -192,8 +192,8 @@ suite('Game', function () {
             sinon.stub(player2, 'getPlayerId').returns(1);
             sut2player.addPlayer(player1, function (err) {});
             sut2player.addPlayer(player2, function (err) {});
-            var spy1 = sinon.spy(sut2player.players[0], 'moveObserver');
-            var spy2 = sinon.spy(sut2player.players[1], 'moveObserver');
+            var spy1 = sinon.spy(sut2player.players()[0], 'moveObserver');
+            var spy2 = sinon.spy(sut2player.players()[1], 'moveObserver');
             sut2player.current = 0;
             sut2player.onNextTurn();
             expect(spy2.calledWith()).to.be(true);
@@ -206,8 +206,8 @@ suite('Game', function () {
             sinon.stub(player2, 'getPlayerId').returns(1);
             sut2player.addPlayer(player1, function (err) {});
             sut2player.addPlayer(player2, function (err) {});
-            var spy1 = sinon.spy(sut2player.players[0], 'moveObserver');
-            var spy2 = sinon.spy(sut2player.players[1], 'moveObserver');
+            var spy1 = sinon.spy(sut2player.players()[0], 'moveObserver');
+            var spy2 = sinon.spy(sut2player.players()[1], 'moveObserver');
             sut2player.current = 1;
             sut2player.onNextTurn();
             expect(spy1.calledWith()).to.be(true);
@@ -249,14 +249,14 @@ suite('Game', function () {
             sinon.stub(player2, 'getPlayerId').returns(0);
             sut.addPlayer(player1, function (err) {
                 expect(err).to.be(undefined);
-                expect(sut.players[0]).to.be(player1);
-                expect(sut.players[1]).to.be(null);
+                expect(sut.players()[0]).to.be(player1);
+                expect(sut.players()[1]).to.be(null);
                 expect(callback.calledOn(context)).to.be(true);
                 expect(callback.calledWithExactly(player1)).to.be(true);
                 sut.addPlayer(player2, function (err) {
                     expect(err).to.be(undefined);
-                    expect(sut.players[0]).to.be(player2);
-                    expect(sut.players[1]).to.be(null);
+                    expect(sut.players()[0]).to.be(player2);
+                    expect(sut.players()[1]).to.be(null);
                     expect(callback.calledOn(context)).to.be(true);
                     expect(callback.calledWithExactly(player2)).to.be(true);
                     expect(callback2.callCount).to.be(0);
@@ -277,18 +277,18 @@ suite('Game', function () {
             sinon.stub(player3, 'getPlayerId').returns(1);
             sut.addPlayer(player1, function (err) {
                 expect(err).to.be(undefined);
-                expect(sut.players[0]).to.be(player1);
-                expect(sut.players[1]).to.be(null);
+                expect(sut.players()[0]).to.be(player1);
+                expect(sut.players()[1]).to.be(null);
                 sut.addPlayer(player3, function (err) {
                     expect(err).to.be(undefined);
-                    expect(sut.players[0]).to.be(player1);
-                    expect(sut.players[1]).to.be(player3);
+                    expect(sut.players()[0]).to.be(player1);
+                    expect(sut.players()[1]).to.be(player3);
                     expect(callback.calledOn(context)).to.be(true);
                     expect(callback.calledWithExactly(sut)).to.be(true);
                     sut.addPlayer(player2, function (err) {
                         expect(err).to.be(undefined);
-                        expect(sut.players[0]).to.be(player2);
-                        expect(sut.players[1]).to.be(player3);
+                        expect(sut.players()[0]).to.be(player2);
+                        expect(sut.players()[1]).to.be(player3);
                         expect(callback.callCount).to.be(2);
                         done();
                     });
@@ -304,8 +304,8 @@ suite('Game', function () {
             sut.registerForEvent('playerJoined', callback, context);
             sut.addPlayer(player, function (err) {
                 expect(err).to.be(undefined);
-                expect(sut.players[0]).to.be(player);
-                expect(sut.players[1]).to.be(null);
+                expect(sut.players()[0]).to.be(player);
+                expect(sut.players()[1]).to.be(null);
                 expect(callback.calledOn(context)).to.be(true);
                 expect(callback.calledWithExactly(player)).to.be(true);
                 done();

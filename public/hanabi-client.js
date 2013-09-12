@@ -205,10 +205,12 @@ YUI().use('event-base', 'event-resize', 'node', function (Y) {
         var splash = Y.one('#splash');
         var newgame = Y.one('#new_game');
         var gamelist = Y.one('#game_list');
-        var waitingforplayers = Y.one('#waiting_for_players');
+        var waiting = Y.one('#waiting_for_players');
         var quit = Y.one('#menu_quit');
         var rules = Y.one('#menu_rules');
         var about = Y.one('#menu_about');
+
+        var game_id = null;
 
         var show_pane = function (pane) {
             var width = $(window).width();
@@ -223,6 +225,15 @@ YUI().use('event-base', 'event-resize', 'node', function (Y) {
         };
         var hide_all_panes = function () {
             Y.all('.panel').setStyle('display', 'none');
+        };
+        var set_waiting = function () {
+            waiting.one('h1').innerHTML = 'Waiting for players...';
+        };
+        var set_joining = function () {
+            waiting.one('h1').innerHTML = 'Joining game...';
+        };
+        var set_creating = function () {
+            waiting.one('h1').innerHTML = 'Creating game...';
         };
 
         // Events from server
@@ -244,44 +255,59 @@ YUI().use('event-base', 'event-resize', 'node', function (Y) {
         // Game events from server
         socket.on('gameReady', function (data) {
             // Hide waiting for players panel
-            hide_pane(waitingforplayers);
+            console.log('gameReady received from server');
+            hide_pane(waiting);
         });
         socket.on('takeTurn', function (data) {
+            console.log('takeTurn received from server');
             // Display message indicating turn
             // TODO do this for all players, add playerIndex to takeTurn event
             Y.one('#player1').addClass('highlighted');
         });
         socket.on('cardDrawn', function (data) {
+            console.log('cardDrawn received from server');
             Y.one('#player1').removeClass('highlighted');
             // Update the specified Hand to add a card at the slot required
         });
         socket.on('cardPlayed', function (data) {
+            console.log('cardPlayed received from server');
             Y.one('#player1').removeClass('highlighted');
         });
         socket.on('clueGiven', function (data) {
+            console.log('clueGiven received from server');
             Y.one('#player1').removeClass('highlighted');
         });
         socket.on('cardDiscarded', function (data) {
+            console.log('cardDiscarded received from server');
             Y.one('#player1').removeClass('highlighted');
         });
         socket.on('clueUsed', function (data) {
+            console.log('clueUsed received from server');
         });
         socket.on('clueRestored', function (data) {
+            console.log('clueRestored received from server');
         });
         socket.on('lifeLost', function (data) {
+            console.log('lifeLost received from server');
         });
         socket.on('enterEndgame', function (data) {
+            console.log('enterEndgame received from server');
         });
         socket.on('deckExhausted', function (data) {
+            console.log('deckExhausted received from server');
         });
 
         // Updates the game list display
         socket.on('gameCreated', function (data) {
+            console.log('gameCreated received from server');
         });
         socket.on('gameStarted', function (data) {
+            console.log('gameStarted received from server');
         });
         socket.on('gameEnded', function (data) {
+            console.log('gameEnded received from server');
         });
+
         splash.one('#splash_join_game').on('click', function(e) {
             e.preventDefault(); e.stopPropagation();
             hide_pane(splash);
@@ -305,7 +331,7 @@ YUI().use('event-base', 'event-resize', 'node', function (Y) {
                         newnode.on('click', function (e) {
                             table.all('tr').removeClass('highlighted');
                             newnode.addClass('highlighted');
-                            gameIdField.set('value', item.id);
+                            game_id = item.id;
                         });
                         table.appendChild(newnode);
                     })();
@@ -328,23 +354,26 @@ YUI().use('event-base', 'event-resize', 'node', function (Y) {
             var name = Y.one('#new_game_name').get('value');
             var players = Y.one("#new_game_players").get('selectedIndex') + 2;
             console.log('name: ' + name + ', players: ' + players);
+            hide_pane(newgame);
+            set_creating();
+            show_pane(waiting);
             Server.newGame(name, players, function (result) {
                 console.log('newGame result: ' + JSON.stringify(result));
                 if (typeof result === 'object') {
+                    set_joining();
                     Server.joinGame(result, function (result) {
                         // TODO implement joinGame
                         console.log('joinGame result: ' + JSON.stringify(result));
                         if (result === undefined) {
-                            hide_pane(newgame);
-                            show_pane(waitingforplayers);
+                            set_waiting();
                         } else {
+                            // TODO show error + route back to splash
                             console.log('Error: joinGame call failed with: ' + JSON.stringify(result));
-                            // Error + back to splash
                         }
                     });
                 } else {
+                    // TODO show error + route back to splash
                     console.log('Error: newGame call failed with: ' + JSON.stringify(result));
-                    // Error + back to new game
                 }
             });
         });
@@ -357,16 +386,14 @@ YUI().use('event-base', 'event-resize', 'node', function (Y) {
         });
         gamelist.one('#game_list_join').on('click', function(e) {
             e.preventDefault(); e.stopPropagation();
-            // TODO attempt to join game in question
-            // Then jump to game in progress
-            // TODO select game from list (GameListing object)
-            var selectedGame = gamelist.one('#game_list_id').get('value');
-            Server.joinGame({id: selectedGame}, function (result) {
+            Server.unsubscribeGameList();
+            hide_pane(gamelist);
+            set_joining();
+            show_pane(waiting);
+            Server.joinGame({id: game_id}, function (result) {
                 console.log('joinGame result: ' + JSON.stringify(result));
                 if (result === undefined) {
-                    Server.unsubscribeGameList();
-                    hide_pane(gamelist);
-                    show_pane(waitingforplayers);
+                    set_waiting();
                 } else {
                     // Error + back to game listing
                     console.log('Error: joinGame call failed with: ' + JSON.stringify(result));
