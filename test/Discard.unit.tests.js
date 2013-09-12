@@ -19,10 +19,6 @@ suite('Deck', function () {
         test('should define discardCard() method', function () {
             expect(sut.discardCard).to.be.a('function');
         });
-
-        test('should define events', function () {
-            expect(sut.events).to.contain('cardDiscarded');
-        });
     });
 
     suite('constructor', function () {
@@ -61,13 +57,8 @@ suite('Deck', function () {
 
         test('should add discarded card to contents and send cardDiscarded event', function () {
             var card = new Card('red', 1);
-            var callback = sinon.spy();
-            var context = new Object();
-            sut.registerForEvent('cardDiscarded', callback, context);
             sut.discardCard(card);
 
-            expect(callback.calledOn(context)).to.be(true);
-            expect(callback.calledWithExactly(card)).to.be(true);
             expect(sut.getContents()[0]).to.be(card);
         });
     });

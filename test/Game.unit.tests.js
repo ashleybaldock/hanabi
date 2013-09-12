@@ -61,11 +61,24 @@ suite('Game', function () {
             expect(sut.giveClueHandler).to.be.a('function');
         });
 
-        test('should define encodeIndex function', function () {
+        test('should define encodeIndex method', function () {
             expect(sut.encodeIndex).to.be.a('function');
         });
-        test('should define decodeIndex function', function () {
+        test('should define decodeIndex method', function () {
             expect(sut.decodeIndex).to.be.a('function');
+        });
+
+        test('should define sendCardDrawnToAllPlayers method', function () {
+            expect(sut.sendCardDrawnToAllPlayers).to.be.a('function');
+        });
+        test('should define sendClueReceivedToAllPlayers method', function () {
+            expect(sut.sendClueReceivedToAllPlayers).to.be.a('function');
+        });
+        test('should define sendCardPlayedToAllPlayers method', function () {
+            expect(sut.sendCardPlayedToAllPlayers).to.be.a('function');
+        });
+        test('should define sendCardDiscardedToAllPlayers method', function () {
+            expect(sut.sendCardDiscardedToAllPlayers).to.be.a('function');
         });
 
         test('should define onAllFireworksComplete event handler', function () {
@@ -199,16 +212,6 @@ suite('Game', function () {
             }).to.throwException('Error: missing callback');
         });
 
-        test('should wire up cardDrawn event on Hand', function (done) {
-            var player = new PlayerInterface();
-            var stub = sinon.stub(player, 'getPlayerId').returns(0);
-            var spy = sinon.spy(sut.hands[0], 'registerForEvent');
-            sut.addPlayer(player, function (err) {
-                expect(spy.calledWith('cardDrawn')).to.be.ok();
-                done();
-            });
-        });
-
         test('should replace existing player if ID matches and send playerJoined event', function (done) {
             var callback = sinon.spy();
             var context = new Object();
@@ -328,6 +331,7 @@ suite('Game', function () {
                 done();
             });
         });
+
         test('should wire player.discardCard event to hand.discardIndex', function (done) {
             var player = new PlayerInterface();
             var stub = sinon.stub(player, 'getPlayerId').returns(0);
@@ -337,12 +341,59 @@ suite('Game', function () {
                 done();
             });
         });
+
         test('should wire player.giveClue event to hand.giveClue', function (done) {
             var player = new PlayerInterface();
             var stub = sinon.stub(player, 'getPlayerId').returns(0);
             var regSpy = sinon.spy(player, 'registerForEvent');
             sut.addPlayer(player, function (err) {
                 expect(regSpy.calledWith('giveClue', sut.hands[0].giveClue, sut.hands[0])).to.be(true);
+                done();
+            });
+        });
+
+        test('should wire cluetokens.clueUsed event to player.clueUsedObserver', function (done) {
+            var player = new PlayerInterface();
+            var stub = sinon.stub(player, 'getPlayerId').returns(0);
+            var regSpy = sinon.spy(sut.cluetokens, 'registerForEvent');
+            sut.addPlayer(player, function (err) {
+                expect(regSpy.calledWith('clueUsed', player.clueUsedObserver, player)).to.be(true);
+                done();
+            });
+        });
+        test('should wire cluetokens.clueRestored event to player.clueRestoredObserver', function (done) {
+            var player = new PlayerInterface();
+            var stub = sinon.stub(player, 'getPlayerId').returns(0);
+            var regSpy = sinon.spy(sut.cluetokens, 'registerForEvent');
+            sut.addPlayer(player, function (err) {
+                expect(regSpy.calledWith('clueRestored', player.clueRestoredObserver, player)).to.be(true);
+                done();
+            });
+        });
+        test('should wire lifetokens.lifeLost event to player.lifeLostObserver', function (done) {
+            var player = new PlayerInterface();
+            var stub = sinon.stub(player, 'getPlayerId').returns(0);
+            var regSpy = sinon.spy(sut.lifetokens, 'registerForEvent');
+            sut.addPlayer(player, function (err) {
+                expect(regSpy.calledWith('lifeLost', player.lifeLostObserver, player)).to.be(true);
+                done();
+            });
+        });
+        test('should wire deck.deckExhausted event to player.deckExhaustedObserver', function (done) {
+            var player = new PlayerInterface();
+            var stub = sinon.stub(player, 'getPlayerId').returns(0);
+            var regSpy = sinon.spy(sut.deck, 'registerForEvent');
+            sut.addPlayer(player, function (err) {
+                expect(regSpy.calledWith('deckExhausted', player.deckExhaustedObserver, player)).to.be(true);
+                done();
+            });
+        });
+        test('should wire turncounter.endgameBegins event to player.endgameBeginsObserver', function (done) {
+            var player = new PlayerInterface();
+            var stub = sinon.stub(player, 'getPlayerId').returns(0);
+            var regSpy = sinon.spy(sut.turncounter, 'registerForEvent');
+            sut.addPlayer(player, function (err) {
+                expect(regSpy.calledWith('endgameBegins', player.endgameBeginsObserver, player)).to.be(true);
                 done();
             });
         });
@@ -474,7 +525,7 @@ suite('Game', function () {
             });
         });
 
-        test('should call drawCard on all hands until they are full (4 player)', function (done) {
+        test.skip('should call drawCard on all hands until they are full (4 player)', function (done) {
             var player1 = new PlayerInterface();
             sinon.stub(player1, 'getPlayerId').returns(0);
             var player2 = new PlayerInterface();
@@ -540,6 +591,126 @@ suite('Game', function () {
                     });
                 });
             });
+        });
+    });
+
+    suite('sendCardDrawnToAllPlayers()', function () {
+        test('should call cardDrawnObserver on all players masking Card from player that drew the card', function () {
+            var playerIndex = 0, cardIndex = 3,
+                card = new Card('red', 1), nullCard = new Card(null, null);
+            var player1 = new PlayerInterface();
+            sinon.stub(player1, 'getPlayerId').returns(0);
+            var spy1 = sinon.spy(player1, 'cardDrawnObserver');
+            var player2 = new PlayerInterface();
+            sinon.stub(player2, 'getPlayerId').returns(1);
+            var spy2 = sinon.spy(player2, 'cardDrawnObserver');
+
+            sut2player.addPlayer(player1, function (err) {});
+            sut2player.addPlayer(player2, function (err) {});
+
+            sut2player.sendCardDrawnToAllPlayers(playerIndex, cardIndex, card);
+
+            expect(spy1.calledWith({playerIndex: 0, cardIndex: cardIndex, card: nullCard})).to.be(true);
+            expect(spy2.calledWith({playerIndex: 1, cardIndex: cardIndex, card: card})).to.be(true);
+        });
+    });
+
+    suite('sendClueReceivedToAllPlayers()()', function () {
+        test('should call clueObserver on all players', function () {
+            var fromPlayerIndex = 0, toPlayerIndex = 1,
+                clueMask = [
+                {colour: 'red', value: null},
+                {colour: null, value: null},
+                {colour: null, value: null},
+                {colour: null, value: null}];
+
+            var player1 = new PlayerInterface();
+            sinon.stub(player1, 'getPlayerId').returns(0);
+            var spy1 = sinon.spy(player1, 'clueObserver');
+            var player2 = new PlayerInterface();
+            sinon.stub(player2, 'getPlayerId').returns(1);
+            var spy2 = sinon.spy(player2, 'clueObserver');
+
+            sut2player.addPlayer(player1, function (err) {});
+            sut2player.addPlayer(player2, function (err) {});
+
+            sut2player.sendClueReceivedToAllPlayers(toPlayerIndex, fromPlayerIndex, clueMask);
+
+            expect(spy1.calledWith({fromPlayerIndex: 0, toPlayerIndex: 1, clueMask: clueMask})).to.be(true);
+            expect(spy2.calledWith({fromPlayerIndex: 1, toPlayerIndex: 0, clueMask: clueMask})).to.be(true);
+        });
+    });
+
+    suite('sendCardPlayedToAllPlayers()()', function () {
+        test('should call cardPlayedObserver on all players', function () {
+            var playerIndex = 0, cardIndex = 3, 
+                card = new Card('red', 1);
+            var player1 = new PlayerInterface();
+            sinon.stub(player1, 'getPlayerId').returns(0);
+            var spy1 = sinon.spy(player1, 'playObserver');
+            var player2 = new PlayerInterface();
+            sinon.stub(player2, 'getPlayerId').returns(1);
+            var spy2 = sinon.spy(player2, 'playObserver');
+
+            sut2player.addPlayer(player1, function (err) {});
+            sut2player.addPlayer(player2, function (err) {});
+
+            sut2player.sendCardPlayedToAllPlayers(playerIndex, cardIndex, card);
+
+            expect(spy1.calledWith({playerIndex: 0, cardIndex: cardIndex, card: card})).to.be(true);
+            expect(spy2.calledWith({playerIndex: 1, cardIndex: cardIndex, card: card})).to.be(true);
+        });
+    });
+
+    suite('sendCardDiscardedToAllPlayers()()', function () {
+        var playerIndex, cardIndex, card,
+            player1, spy1,
+            player2, spy2,
+            player3, spy3,
+            player4, spy4;
+
+        setup(function () {
+            playerIndex = 0, cardIndex = 3, card = new Card('red', 1);
+            player1 = new PlayerInterface();
+            player2 = new PlayerInterface();
+            player3 = new PlayerInterface();
+            player4 = new PlayerInterface();
+            sinon.stub(player1, 'getPlayerId').returns(0);
+            sinon.stub(player2, 'getPlayerId').returns(1);
+            sinon.stub(player3, 'getPlayerId').returns(2);
+            sinon.stub(player4, 'getPlayerId').returns(3);
+            spy1 = sinon.spy(player1, 'discardObserver');
+            spy2 = sinon.spy(player2, 'discardObserver');
+            spy3 = sinon.spy(player3, 'discardObserver');
+            spy4 = sinon.spy(player4, 'discardObserver');
+        });
+
+        test('2 player should call discardObserver on all players', function () {
+            playerIndex = 0, cardIndex = 3, card = new Card('red', 1);
+
+            sut2player.addPlayer(player1, function (err) {});
+            sut2player.addPlayer(player2, function (err) {});
+
+            sut2player.sendCardDiscardedToAllPlayers(playerIndex, cardIndex, card);
+
+            expect(spy1.calledWith({playerIndex: 0, cardIndex: cardIndex, card: card})).to.be(true);
+            expect(spy2.calledWith({playerIndex: 1, cardIndex: cardIndex, card: card})).to.be(true);
+        });
+
+        test('4 player should call discardObserver on all players', function () {
+            playerIndex = 2, cardIndex = 3, card = new Card('red', 1);
+
+            sut4player.addPlayer(player1, function (err) {});
+            sut4player.addPlayer(player2, function (err) {});
+            sut4player.addPlayer(player3, function (err) {});
+            sut4player.addPlayer(player4, function (err) {});
+
+            sut4player.sendCardDiscardedToAllPlayers(playerIndex, cardIndex, card);
+
+            expect(spy1.calledWith({playerIndex: 2, cardIndex: cardIndex, card: card})).to.be(true);
+            expect(spy2.calledWith({playerIndex: 1, cardIndex: cardIndex, card: card})).to.be(true);
+            expect(spy3.calledWith({playerIndex: 0, cardIndex: cardIndex, card: card})).to.be(true);
+            expect(spy4.calledWith({playerIndex: 3, cardIndex: cardIndex, card: card})).to.be(true);
         });
     });
 });

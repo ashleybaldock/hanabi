@@ -72,10 +72,12 @@ suite('Hand', function () {
         test('should define events', function () {
             expect(sut.events).to.contain('cardDrawn');
             expect(sut.events).to.contain('discardCard');
+            expect(sut.events).to.contain('cardDiscarded');
             expect(sut.events).to.contain('restoreClue');
             expect(sut.events).to.contain('turnComplete');
             expect(sut.events).to.contain('giveClue');
             expect(sut.events).to.contain('clueReceived');
+            expect(sut.events).to.contain('cardPlayed');
         });
     });
 
@@ -311,6 +313,25 @@ suite('Hand', function () {
             });
         });
 
+        test('should emit cardPlayed event if successful', function (done) {
+            var cardIndex = 0;
+            var cards = [card4, card3, card2, card1];
+            var drawStub = sinon.stub(deck, 'drawCard', function (callback) {
+                callback(cards.pop());
+            });
+            var stub = sinon.stub(fireworks, 'play').callsArgWith(1, undefined);
+            var sendEventSpy = sinon.spy(sut, 'sendEvent');
+            var callback = sinon.spy();
+            var context = new Object();
+            sut.registerForEvent('cardPlayed', callback, context);
+            sut.drawCard(function () {});
+            sut.playIndex(cardIndex, function (err) {
+                expect(sendEventSpy.calledWith('cardPlayed')).to.be(true);
+                expect(callback.calledWith(index, cardIndex, card1)).to.be(true);
+                done();
+            });
+        });
+
         test('should trigger drawCard() if successful', function (done) {
             var cards = [card4, card3, card2, card1];
             var drawStub = sinon.stub(deck, 'drawCard', function (callback) {
@@ -394,7 +415,7 @@ suite('Hand', function () {
             sut.drawCard(function () {});
             sut.discardIndex(0, function (err) {
                 expect(err).to.be(undefined);
-                expect(sendEventSpy.calledWith('discardCard', [card1])).to.be(true);
+                expect(sendEventSpy.calledWith('cardDiscarded', [index, 0, card1])).to.be(true);
                 done();
             });
         });

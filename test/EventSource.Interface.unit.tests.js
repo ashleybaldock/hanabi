@@ -29,7 +29,6 @@ var implementations = [
 
 suite('EventSource.Interface implementations', function () {
     for (var i = 0; i < implementations.length; i++) {
-
         suite(testUtil.getObjectName(implementations[i]()), function () {
             var sut;
             var eventName = 'testEvent';
