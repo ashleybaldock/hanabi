@@ -90,6 +90,8 @@ var Card = function (div, data, index) {
 
 var Game = {
     id: null,
+    clues: 9,
+    lives: 3,
     cards: {
         players: [[], [], [], [], []],
         fireworks: {
@@ -280,6 +282,14 @@ var layout = function () {
                 }
             }
         }
+
+        // Render clue/life tokens
+        for (var i = 9; i > Game.clues; i--) {
+            clues.one('#clue_token_' + i).addClass('flipped');
+        }
+        for (var i = 3; i > Game.lives; i--) {
+            lives.one('#life_token_' + i).addClass('flipped');
+        }
     });
 };
 
@@ -340,6 +350,8 @@ YUI().use('event-base', 'event-resize', 'node', function (Y) {
             // Hide waiting for players panel
             // TODO - gameReady should send number of players to update game board layout
             Game.playerCount = data.playerCount;
+            Game.lives = data.lifetokens.lives;
+            Game.clues = data.cluetokens.clues;
             console.log('gameReady received from server');
             hide_pane(waiting);
         });
@@ -475,14 +487,20 @@ YUI().use('event-base', 'event-resize', 'node', function (Y) {
         socket.on('clueUsed', function (data) {
             console.log('clueUsed received from server');
             // Decrement number of clues (change CSS on next token)
+            Game.clues -= 1;
+            layout();
         });
         socket.on('clueRestored', function (data) {
             console.log('clueRestored received from server');
             // Increment number of clues (change CSS on next token)
+            Game.clues += 1;
+            layout();
         });
         socket.on('lifeLost', function (data) {
             console.log('lifeLost received from server');
             // Decrement number of lives (change CSS on next token)
+            Game.lives -= 1;
+            layout();
         });
         socket.on('enterEndgame', function (data) {
             console.log('enterEndgame received from server');
