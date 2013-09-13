@@ -86,29 +86,6 @@ h1 {
     background-color: rgb(255, 255, 153);
     box-shadow: 0px 1px 10px 0.5px rgb(255, 255, 153);
 }
-.highlightColourred {
-    box-shadow: 0px 1px 10px 0.5px rgb(113, 36, 26);
-    background-color: rgb(113, 36, 26);
-}
-.highlightColourblue {
-    box-shadow: 0px 1px 10px 0.5px rgb(0, 76, 109);
-    background-color: rgb(0, 76, 109);
-}
-.highlightColourgreen {
-    box-shadow: 0px 1px 10px 0.5px rgb(0, 143, 0);
-    background-color: rgb(0, 143, 0);
-}
-.highlightColouryellow {
-    box-shadow: 0px 1px 10px 0.5px rgb(255, 169, 40);
-    background-color: rgb(255, 169, 40);
-}
-.highlightColourwhite {
-    box-shadow: 0px 1px 10px 0.5px rgb(255, 255, 255);
-    background-color: rgb(255, 255, 255);
-}
-.highlightValue {
-    text-shadow: 0 0 0.2em rgb(255, 255, 153), 0 0 0.2em rgb(255, 255, 153), 0 0 0.2em rgb(255, 255, 153);
-}
 
 #fireworks, #gubbins {
     display: table;
@@ -136,6 +113,12 @@ h1 {
     width: 60px;
     height: 60px;
     z-index: 1;
+}
+#draw {
+    background-color: #000;
+}
+#draw.empty {
+    background-color: #CDCDCD;
 }
 .card {
     border: 2px solid #808080;
@@ -204,6 +187,29 @@ h1 {
 .card.white {
     background-color: #FFFFFF;
     color: #000000;
+}
+.highlightColourred {
+    box-shadow: 0px 1px 10px 0.5px rgb(113, 36, 26);
+    background-color: rgb(113, 36, 26);
+}
+.highlightColourblue {
+    box-shadow: 0px 1px 10px 0.5px rgb(0, 76, 109);
+    background-color: rgb(0, 76, 109);
+}
+.highlightColourgreen {
+    box-shadow: 0px 1px 10px 0.5px rgb(0, 143, 0);
+    background-color: rgb(0, 143, 0);
+}
+.highlightColouryellow {
+    box-shadow: 0px 1px 10px 0.5px rgb(255, 169, 40);
+    background-color: rgb(255, 169, 40);
+}
+.highlightColourwhite {
+    box-shadow: 0px 1px 10px 0.5px rgb(255, 255, 255);
+    background-color: rgb(255, 255, 255);
+}
+.highlightValue {
+    text-shadow: 0 0 0.2em rgb(255, 255, 153), 0 0 0.2em rgb(255, 255, 153), 0 0 0.2em rgb(255, 255, 153);
 }
 
 body {

@@ -20,7 +20,7 @@ var LocalStorage = {
     }
 };
 
-var socket = io.connect('http://localhost:3000');
+var socket = io.connect('http://neutrino.entropy.me.uk:3000');
 
 socket.on('connect', function (data) {
     console.log('connect - sending routeClient');
@@ -75,10 +75,9 @@ var Server = {
         console.log('discardCard call to server');
         socket.emit('discardCard', {playerIndex: playerIndex, cardIndex: cardIndex}, callback);
     },
-    giveClue: function (fromPlayerIndex, toPlayerIndex, clue, callback) {
-        console.log('discardCard call to server');
-        socket.emit('discardCard', {fromPlayerIndex: fromPlayerIndex,
-            toPlayerIndex: toPlayerIndex, clue: clue}, callback);
+    giveClue: function (toPlayerIndex, clue, callback) {
+        console.log('giveClue call to server');
+        socket.emit('giveClue', {toPlayerIndex: toPlayerIndex, clue: clue}, callback);
     }
 }
 
@@ -304,6 +303,7 @@ YUI().use('event-base', 'event-resize', 'node', function (Y) {
         var rules = Y.one('#menu_rules');
         var about = Y.one('#menu_about');
         var playordiscard = Y.one('#playordiscard');
+        var giveclue = Y.one('#giveclue');
 
         var show_pane = function (pane) {
             var width = $(window).width();
@@ -352,6 +352,7 @@ YUI().use('event-base', 'event-resize', 'node', function (Y) {
             Game.playerCount = data.playerCount;
             Game.lives = data.lifetokens.lives;
             Game.clues = data.cluetokens.clues;
+            Y.one('#draw').removeClass('empty');
             console.log('gameReady received from server');
             hide_pane(waiting);
         });
@@ -373,9 +374,13 @@ YUI().use('event-base', 'event-resize', 'node', function (Y) {
             var card = new Card(cardDiv, cardData, cardIndex);
             // Wire up events on this card
             cardDiv.on('click', function (e) {
+                hide_pane(playordiscard);
+                hide_pane(giveclue);
                 e.preventDefault();
                 playordiscard.one('#playordiscard_play').detachAll();
                 playordiscard.one('#playordiscard_discard').detachAll();
+                giveclue.one('#giveclue_value').detachAll();
+                giveclue.one('#giveclue_colour').detachAll();
                 if (!Game.yourTurn) {
                     return;
                 }
@@ -402,6 +407,25 @@ YUI().use('event-base', 'event-resize', 'node', function (Y) {
                     show_pane(playordiscard);
                 } else {
                     // Another player's card, option is give clue
+                    giveclue.one('#giveclue_value').on('click', function (e) {
+                        e.preventDefault();
+                        hide_pane(giveclue);
+                        Server.giveClue(playerIndex, card.data.value, function (result) {
+                            console.log('giveClue result: ' + JSON.stringify(result));
+                        });
+                    });
+                    giveclue.one('#giveclue_colour').on('click', function (e) {
+                        e.preventDefault();
+                        hide_pane(giveclue);
+                        Server.giveClue(playerIndex, card.data.colour, function (result) {
+                            console.log('giveClue result: ' + JSON.stringify(result));
+                        });
+                    });
+                    giveclue.one('#giveclue_cancel').on('click', function (e) {
+                        e.preventDefault();
+                        hide_pane(giveclue);
+                    });
+                    show_pane(giveclue);
                 }
             });
 
@@ -420,7 +444,7 @@ YUI().use('event-base', 'event-resize', 'node', function (Y) {
             }
         };
         socket.on('cardPlayed', function (data) {
-            console.log('cardPlayed received from server');
+            console.log('cardPlayed received from server, data: ' + JSON.stringify(data));
             Y.one('#player1').removeClass('highlighted');
             Game.yourTurn = false;
             // Pop card from specified hand
@@ -429,14 +453,16 @@ YUI().use('event-base', 'event-resize', 'node', function (Y) {
             reIndex(Game.cards.players[data.playerIndex]);
             card.div.addClass(data.card.colour);
             card.div.set('text', '' + data.card.value);
+            card.div.detachAll();
             if (data.result === 'ok') {
                 Game.cards.fireworks[data.card.colour].push(card);
             } else {
                 Game.cards.discard.push(card);
             }
+            layout();
         });
         socket.on('cardDiscarded', function (data) {
-            console.log('cardDiscarded received from server');
+            console.log('cardDiscarded received from server, data: ' + JSON.stringify(data));
             Y.one('#player1').removeClass('highlighted');
             Game.yourTurn = false;
             // Pop card from specified hand
@@ -446,14 +472,16 @@ YUI().use('event-base', 'event-resize', 'node', function (Y) {
             // Reset card info since it may be hidden
             card.div.addClass(data.card.colour);
             card.div.set('text', '' + data.card.value);
+            card.div.detachAll();
             Game.cards.discard.push(card);
+            layout();
         });
 
         var clueHighlight = function (div, clue, index) {
             if (clue.value !== null) {
                 if (index === 0) {
                     // Clue for us
-                    div.set('text', '' + value);
+                    div.set('text', '' + clue.value);
                     div.addClass('highlightValue');
                     setTimeout(function () {
                         div.set('text', '?');
@@ -466,22 +494,22 @@ YUI().use('event-base', 'event-resize', 'node', function (Y) {
                     }, 5000);
                 }
             }
-            if (data.clueMask[i].colour !== null) {
-                div.addClass('highlightColour' + data.clueMask[i].colour);
+            if (clue.colour !== null) {
+                div.addClass('highlightColour' + clue.colour);
                 setTimeout(function () {
-                    div.removeClass('highlightColour' + data.clueMask[i].colour);
+                    div.removeClass('highlightColour' + clue.colour);
                 }, 5000);
             }
         };
 
         socket.on('clueGiven', function (data) {
-            console.log('clueGiven received from server');
+            console.log('clueGiven received from server, data: ' + JSON.stringify(data));
             Y.one('#player1').removeClass('highlighted');
             Game.yourTurn = false;
             // Highlight cards based on indexes and clue mask
             // Set 10 second timeout to hide the clue
             for (var i = 0; i < data.clueMask.length; i++) {
-                clueHighlight(Game.players[data.toPlayerIndex][i].div, data.clueMask[i], data.toPlayerIndex);
+                clueHighlight(Game.cards.players[data.toPlayerIndex][i].div, data.clueMask[i], data.toPlayerIndex);
             }
         });
         socket.on('clueUsed', function (data) {
@@ -509,6 +537,7 @@ YUI().use('event-base', 'event-resize', 'node', function (Y) {
         socket.on('deckExhausted', function (data) {
             console.log('deckExhausted received from server');
             // Change deck to look empty
+            Y.one('#draw').addClass('empty');
         });
 
         // Updates the game list display

@@ -669,7 +669,7 @@ suite('Game', function () {
             sut2player.addPlayer(player1, function (err) {});
             sut2player.addPlayer(player2, function (err) {});
 
-            sut2player.sendClueReceivedToAllPlayers(toPlayerIndex, fromPlayerIndex, clueMask);
+            sut2player.sendClueReceivedToAllPlayers(fromPlayerIndex, toPlayerIndex, clueMask);
 
             expect(spy1.calledWith({fromPlayerIndex: 0, toPlayerIndex: 1, clueMask: clueMask})).to.be(true);
             expect(spy2.calledWith({fromPlayerIndex: 1, toPlayerIndex: 0, clueMask: clueMask})).to.be(true);
@@ -686,14 +686,15 @@ suite('Game', function () {
             var player2 = new PlayerInterface();
             sinon.stub(player2, 'getPlayerId').returns(1);
             var spy2 = sinon.spy(player2, 'playObserver');
+            var result = 'ok';
 
             sut2player.addPlayer(player1, function (err) {});
             sut2player.addPlayer(player2, function (err) {});
 
-            sut2player.sendCardPlayedToAllPlayers(playerIndex, cardIndex, card);
+            sut2player.sendCardPlayedToAllPlayers(playerIndex, cardIndex, card, result);
 
-            expect(spy1.calledWith({playerIndex: 0, cardIndex: cardIndex, card: card})).to.be(true);
-            expect(spy2.calledWith({playerIndex: 1, cardIndex: cardIndex, card: card})).to.be(true);
+            expect(spy1.calledWith({playerIndex: 0, cardIndex: cardIndex, card: card, result: result})).to.be(true);
+            expect(spy2.calledWith({playerIndex: 1, cardIndex: cardIndex, card: card, result: result})).to.be(true);
         });
     });
 
