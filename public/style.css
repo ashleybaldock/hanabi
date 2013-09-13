@@ -4,6 +4,7 @@ html, body, div, ul, li, p, img, h1, h2, h3, h4, h5, h6 {
     border: 0px none;
     padding: 0px;
     font-family: Verdana,Arial,Helvetica,sans-serif;
+    font-size: 100.01%;
 }
 
 h1 {
@@ -113,15 +114,15 @@ h1 {
 }
 .card {
     border: 2px solid #808080;
-    color: #ffffff;
+    background-color: #000;
+    color: #DDD;
     text-align: center;
-    position: relative;
+    position: absolute;
     float: left;
     margin: 4px;
-    width: 60px;
-    height: 60px;
     z-index: 2;
     cursor: move;
+    font-size: 20px;
 }
 
 .token {

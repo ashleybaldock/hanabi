@@ -107,7 +107,7 @@ suite('GameProvider.Interface implementations', function () {
             suite('persist tests', function () {
                 test('removeById() should remove previously created item', function (done) {
                     sut.save(GameFactory('test1', 2), function (newListing) {
-                        expect(newListing.id).to.be(0);
+                        expect(newListing.id).to.be('0');
                         sut.findAll(function (result) {
                             expect(result.length).to.be(1);
                             sut.removeById(newListing.id, function (removedListing) {

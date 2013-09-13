@@ -32,7 +32,7 @@ var contract_tests = function (done) {
     });
 
     test('findById() should execute callback', function (done) {
-        sut.findById(0, done);
+        sut.findById('0', done);
     });
 
     test('should define save() method', function() {
@@ -53,21 +53,21 @@ var contract_tests = function (done) {
 
     test('removeById() should throw error if callback not a function', function () {
         expect(function () {
-            sut.removeById(0, null);
+            sut.removeById('0', null);
         }).to.throwException(function (ex) {
             expect(ex).to.be('callback is not a function!');
         });
     });
 
     test('removeById() should execute callback', function (done) {
-        sut.removeById(0, done);
+        sut.removeById('0', done);
     });
 };
 
 var persist_tests = function (done) {
     test('removeById() should remove previously created item', function (done) {
         sut.save(new Client(), function (newListing) {
-            expect(newListing.id).to.be(0);
+            expect(newListing.id).to.be('0');
             sut.findAll(function (result) {
                 expect(result.length).to.be(1);
                 sut.removeById(newListing.id, function (removedListing) {

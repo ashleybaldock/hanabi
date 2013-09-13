@@ -67,10 +67,29 @@ var Server = {
     }
 }
 
+var Card = function (div, data) {
+    this.div = div;
+    this.data = data;
+};
+
+var Game = {
+    id: null,
+    cards: {
+        players: [[], [], [], [], []],
+        redFirework: [],
+        blueFirework: [],
+        greenFirework: [],
+        yellowFirework: [],
+        whiteFirework: [],
+        discard: []
+    },
+    playerCount: 5
+};
+
 
 // Position game board elements based on count of players and current window size
 // Called whenever the window is resized
-var layout = function (playerCount) {
+var layout = function () {
     YUI().use('node', function (Y) {
         var width = $(window).width();
         var height = $(window).height();
@@ -90,7 +109,7 @@ var layout = function (playerCount) {
         var board = gameboard.one('#board');
 
         // Set size of cards/slots relative to screen size
-        var tileSize = Math.min(width/10, height/8);
+        var tileSize = Math.floor(Math.min(width/10, height/8));
 
         var position_bottomMiddle = function (pane) {
             pane.setStyle('display', 'block');
@@ -138,7 +157,8 @@ var layout = function (playerCount) {
             pane.setStyle('display', 'none');
         };
 
-        gameboard.all('div.slot, div.card').setStyles({'width': tileSize + 'px', 'height': tileSize + 'px'});
+        gameboard.all('div.slot, div.card').setStyles(
+            {'width': tileSize + 'px', 'height': tileSize + 'px'});
         gameboard.all('div.token').setStyles({'width': tileSize / 4 + 'px', 'height': tileSize / 4 + 'px'});
 
         // Set position of elements (this depends on the slot size having been set already)
@@ -159,7 +179,7 @@ var layout = function (playerCount) {
         };
 
         // 2 player game, only Player 2 visible, top center of screen
-        if (playerCount === 2) {
+        if (Game.playerCount === 2) {
             show_fifth_cards();
             position_topMiddle(player2);
             player3.setStyle('display', 'none');
@@ -168,7 +188,7 @@ var layout = function (playerCount) {
         }
 
         // 3 player game, only Player 2 and 3 visible, top left and right of screen
-        if (playerCount === 3) {
+        if (Game.playerCount === 3) {
             show_fifth_cards();
             position_topLeft(player2);
             position_topRight(player3);
@@ -177,7 +197,7 @@ var layout = function (playerCount) {
         }
 
         // 4 player game, only Player 2, 3 and 4 visible, top center, left and right
-        if (playerCount === 4) {
+        if (Game.playerCount === 4) {
             hide_fifth_cards();
             position_left(player2);
             position_topMiddle(player3);
@@ -186,7 +206,7 @@ var layout = function (playerCount) {
         }
 
         // 5 player game, all Players visible, all positions
-        if (playerCount === 5) {
+        if (Game.playerCount === 5) {
             hide_fifth_cards();
             position_left(player2);
             position_topLeft(player3);
@@ -196,6 +216,24 @@ var layout = function (playerCount) {
         
         // Player 1 always visible at bottom center of screen
         position_bottomMiddle(player1);
+
+        // Now set position of all the cards using computed position of slots
+
+        var slot, card;
+        for (var p = 0; p < Game.playerCount; p++) {
+            for (var i = 0; i < Game.cards.players[0].length; i++) {
+                card = Game.cards.players[p][i];
+                if (card !== undefined) {
+                    var slotId = ('#player' + (p + 1) + '_slot' + (i + 1));
+                    console.log('fetching slot position for: ' + slotId);
+                    slot = Y.one(slotId);
+                    if (slot !== null) {
+                        card.div.setY(slot.getY());
+                        card.div.setX(slot.getX());
+                    }
+                }
+            }
+        }
     });
 };
 
@@ -209,8 +247,6 @@ YUI().use('event-base', 'event-resize', 'node', function (Y) {
         var quit = Y.one('#menu_quit');
         var rules = Y.one('#menu_rules');
         var about = Y.one('#menu_about');
-
-        var game_id = null;
 
         var show_pane = function (pane) {
             var width = $(window).width();
@@ -227,13 +263,13 @@ YUI().use('event-base', 'event-resize', 'node', function (Y) {
             Y.all('.panel').setStyle('display', 'none');
         };
         var set_waiting = function () {
-            waiting.one('h1').innerHTML = 'Waiting for players...';
+            waiting.one('h1').set('text', 'Waiting for players...');
         };
         var set_joining = function () {
-            waiting.one('h1').innerHTML = 'Joining game...';
+            waiting.one('h1').set('text', 'Joining game...');
         };
         var set_creating = function () {
-            waiting.one('h1').innerHTML = 'Creating game...';
+            waiting.one('h1').set('text', 'Creating game...');
         };
 
         // Events from server
@@ -255,6 +291,8 @@ YUI().use('event-base', 'event-resize', 'node', function (Y) {
         // Game events from server
         socket.on('gameReady', function (data) {
             // Hide waiting for players panel
+            // TODO - gameReady should send number of players to update game board layout
+            Game.playerCount = data.playerCount;
             console.log('gameReady received from server');
             hide_pane(waiting);
         });
@@ -264,10 +302,26 @@ YUI().use('event-base', 'event-resize', 'node', function (Y) {
             // TODO do this for all players, add playerIndex to takeTurn event
             Y.one('#player1').addClass('highlighted');
         });
+
+        var addCard = function (playerIndex, cardIndex, cardData) {
+            var cardsContainer = Y.one('#cards');
+            var cardDiv = Y.Node.create('<div>?</div>');
+            cardDiv.addClass('card');
+            if (cardData.colour !== null) cardDiv.addClass(cardData.colour);
+            if (cardData.value !== null) cardDiv.set('text', '' + cardData.value);
+            cardsContainer.appendChild(cardDiv);
+            var card = new Card(cardDiv, cardData);
+            // Wire up events on this card
+
+            Game.cards.players[playerIndex].push(card);
+            return card;
+        };
+
         socket.on('cardDrawn', function (data) {
-            console.log('cardDrawn received from server');
+            console.log('cardDrawn received from server, data: ' + JSON.stringify(data));
             Y.one('#player1').removeClass('highlighted');
-            // Update the specified Hand to add a card at the slot required
+            addCard(data.playerIndex, data.cardIndex, data.card);
+            layout();
         });
         socket.on('cardPlayed', function (data) {
             console.log('cardPlayed received from server');
@@ -331,7 +385,7 @@ YUI().use('event-base', 'event-resize', 'node', function (Y) {
                         newnode.on('click', function (e) {
                             table.all('tr').removeClass('highlighted');
                             newnode.addClass('highlighted');
-                            game_id = item.id;
+                            Game.id = item.id;
                         });
                         table.appendChild(newnode);
                     })();
@@ -390,7 +444,7 @@ YUI().use('event-base', 'event-resize', 'node', function (Y) {
             hide_pane(gamelist);
             set_joining();
             show_pane(waiting);
-            Server.joinGame({id: game_id}, function (result) {
+            Server.joinGame({id: Game.id}, function (result) {
                 console.log('joinGame result: ' + JSON.stringify(result));
                 if (result === undefined) {
                     set_waiting();
@@ -428,11 +482,11 @@ YUI().use('event-base', 'event-resize', 'node', function (Y) {
         });
 
         Y.on('windowresize', function () {
-            layout(3);
+            layout();
         });
 
         show_pane(splash);
-        layout(5);
+        layout();
     });
 });
 

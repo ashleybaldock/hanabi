@@ -204,7 +204,7 @@ suite('Hand', function () {
                 expect(err).to.be(undefined);
                 expect(stub.callCount).to.be(1);
                 expect(callback.calledOn(context)).to.be(true);
-                expect(callback.calledWithExactly(card)).to.be(true);
+                expect(callback.calledWithExactly(index, 0, card)).to.be(true);
                 expect(sut.cards).to.have.length(1);
                 stub.restore();
                 done();
