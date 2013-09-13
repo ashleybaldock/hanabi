@@ -24,7 +24,9 @@ var socket = io.connect('http://localhost:3000');
 
 socket.on('connect', function (data) {
     console.log('connect - sending routeClient');
-    socket.emit('routeClient', {id: LocalStorage.get_clientId()});
+    //socket.emit('routeClient', {id: LocalStorage.get_clientId()});
+    // For testing purposes just get a new ID each time, avoids needing to delete cookies
+    socket.emit('routeClient', {id: null});
 });
 
 socket.on('setClientId', function (data) {
@@ -64,26 +66,43 @@ var Server = {
     joinGame: function (game, callback) {
         console.log('joinGame call to server');
         socket.emit('joinGame', game, callback);
+    },
+    playCard: function (playerIndex, cardIndex, callback) {
+        console.log('playCard call to server');
+        socket.emit('playCard', {playerIndex: playerIndex, cardIndex: cardIndex}, callback);
+    },
+    discardCard: function (playerIndex, cardIndex, callback) {
+        console.log('discardCard call to server');
+        socket.emit('discardCard', {playerIndex: playerIndex, cardIndex: cardIndex}, callback);
+    },
+    giveClue: function (fromPlayerIndex, toPlayerIndex, clue, callback) {
+        console.log('discardCard call to server');
+        socket.emit('discardCard', {fromPlayerIndex: fromPlayerIndex,
+            toPlayerIndex: toPlayerIndex, clue: clue}, callback);
     }
 }
 
-var Card = function (div, data) {
+var Card = function (div, data, index) {
     this.div = div;
     this.data = data;
+    this.index = index;
 };
 
 var Game = {
     id: null,
     cards: {
         players: [[], [], [], [], []],
-        redFirework: [],
-        blueFirework: [],
-        greenFirework: [],
-        yellowFirework: [],
-        whiteFirework: [],
+        fireworks: {
+            red: [],
+            blue: [],
+            green: [],
+            yellow: [],
+            white: []
+        },
         discard: []
     },
-    playerCount: 5
+    playerCount: 5,
+    yourTurn: false
 };
 
 
@@ -158,7 +177,8 @@ var layout = function () {
         };
 
         gameboard.all('div.slot, div.card').setStyles(
-            {'width': tileSize + 'px', 'height': tileSize + 'px'});
+            {'width': tileSize + 'px', 'height': tileSize + 'px',
+            'lineHeight': tileSize + 'px', 'fontSize': Math.floor(tileSize * 0.6) + 'px'});
         gameboard.all('div.token').setStyles({'width': tileSize / 4 + 'px', 'height': tileSize / 4 + 'px'});
 
         // Set position of elements (this depends on the slot size having been set already)
@@ -225,11 +245,37 @@ var layout = function () {
                 card = Game.cards.players[p][i];
                 if (card !== undefined) {
                     var slotId = ('#player' + (p + 1) + '_slot' + (i + 1));
-                    console.log('fetching slot position for: ' + slotId);
                     slot = Y.one(slotId);
                     if (slot !== null) {
                         card.div.setY(slot.getY());
                         card.div.setX(slot.getX());
+                        card.div.setStyle('zIndex', '10');
+                    }
+                }
+            }
+        }
+        for (var i = 0; i < Game.cards.discard.length; i++) {
+            card = Game.cards.discard[i];
+            if (card !== undefined) {
+                slot = Y.one('#discard');
+                if (slot !== null) {
+                    card.div.setY(slot.getY());
+                    card.div.setX(slot.getX());
+                    card.div.setStyle('zIndex', '' + (i + 10));
+                }
+            }
+        }
+        var colours = ['red', 'blue', 'green', 'yellow', 'white'], colour;
+        for (var c = 0; c < colours.length; c++) {
+            colour = colours[c];
+            for (var i = 0; i < Game.cards.fireworks[colour].length; i++) {
+                card = Game.cards.fireworks[colour][i];
+                if (card !== undefined) {
+                    slot = Y.one('#firework_' + colour);
+                    if (slot !== null) {
+                        card.div.setY(slot.getY());
+                        card.div.setX(slot.getX());
+                        card.div.setStyle('zIndex', '' + (i + 10));
                     }
                 }
             }
@@ -247,6 +293,7 @@ YUI().use('event-base', 'event-resize', 'node', function (Y) {
         var quit = Y.one('#menu_quit');
         var rules = Y.one('#menu_rules');
         var about = Y.one('#menu_about');
+        var playordiscard = Y.one('#playordiscard');
 
         var show_pane = function (pane) {
             var width = $(window).width();
@@ -301,6 +348,7 @@ YUI().use('event-base', 'event-resize', 'node', function (Y) {
             // Display message indicating turn
             // TODO do this for all players, add playerIndex to takeTurn event
             Y.one('#player1').addClass('highlighted');
+            Game.yourTurn = true;
         });
 
         var addCard = function (playerIndex, cardIndex, cardData) {
@@ -310,8 +358,40 @@ YUI().use('event-base', 'event-resize', 'node', function (Y) {
             if (cardData.colour !== null) cardDiv.addClass(cardData.colour);
             if (cardData.value !== null) cardDiv.set('text', '' + cardData.value);
             cardsContainer.appendChild(cardDiv);
-            var card = new Card(cardDiv, cardData);
+            var card = new Card(cardDiv, cardData, cardIndex);
             // Wire up events on this card
+            cardDiv.on('click', function (e) {
+                e.preventDefault();
+                playordiscard.one('#playordiscard_play').detachAll();
+                playordiscard.one('#playordiscard_discard').detachAll();
+                if (!Game.yourTurn) {
+                    return;
+                }
+                if (playerIndex === 0) {
+                    // Your card, options are discard or play
+                    playordiscard.one('#playordiscard_play').on('click', function (e) {
+                        e.preventDefault();
+                        hide_pane(playordiscard);
+                        Server.playCard(playerIndex, card.index, function (result) {
+                            console.log('playCard result: ' + JSON.stringify(result));
+                        });
+                    });
+                    playordiscard.one('#playordiscard_discard').on('click', function (e) {
+                        e.preventDefault();
+                        hide_pane(playordiscard);
+                        Server.discardCard(playerIndex, card.index, function (result) {
+                            console.log('discardCard result: ' + JSON.stringify(result));
+                        });
+                    });
+                    playordiscard.one('#playordiscard_cancel').on('click', function (e) {
+                        e.preventDefault();
+                        hide_pane(playordiscard);
+                    });
+                    show_pane(playordiscard);
+                } else {
+                    // Another player's card, option is give clue
+                }
+            });
 
             Game.cards.players[playerIndex].push(card);
             return card;
@@ -319,36 +399,98 @@ YUI().use('event-base', 'event-resize', 'node', function (Y) {
 
         socket.on('cardDrawn', function (data) {
             console.log('cardDrawn received from server, data: ' + JSON.stringify(data));
-            Y.one('#player1').removeClass('highlighted');
             addCard(data.playerIndex, data.cardIndex, data.card);
             layout();
         });
+        var reIndex = function (array) {
+            for (var i = 0; i < array.length; i++) {
+                array[i].index = i;
+            }
+        };
         socket.on('cardPlayed', function (data) {
             console.log('cardPlayed received from server');
             Y.one('#player1').removeClass('highlighted');
-        });
-        socket.on('clueGiven', function (data) {
-            console.log('clueGiven received from server');
-            Y.one('#player1').removeClass('highlighted');
+            Game.yourTurn = false;
+            // Pop card from specified hand
+            // Firework updated event/card discarded event updates those pile
+            var card = Game.cards.players[data.playerIndex].splice(data.cardIndex, 1)[0];
+            reIndex(Game.cards.players[data.playerIndex]);
+            card.div.addClass(data.card.colour);
+            card.div.set('text', '' + data.card.value);
+            if (data.result === 'ok') {
+                Game.cards.fireworks[data.card.colour].push(card);
+            } else {
+                Game.cards.discard.push(card);
+            }
         });
         socket.on('cardDiscarded', function (data) {
             console.log('cardDiscarded received from server');
             Y.one('#player1').removeClass('highlighted');
+            Game.yourTurn = false;
+            // Pop card from specified hand
+            // Add it to discard pile at top
+            var card = Game.cards.players[data.playerIndex].splice(data.cardIndex, 1)[0];
+            reIndex(Game.cards.players[data.playerIndex]);
+            // Reset card info since it may be hidden
+            card.div.addClass(data.card.colour);
+            card.div.set('text', '' + data.card.value);
+            Game.cards.discard.push(card);
+        });
+
+        var clueHighlight = function (div, clue, index) {
+            if (clue.value !== null) {
+                if (index === 0) {
+                    // Clue for us
+                    div.set('text', '' + value);
+                    div.addClass('highlightValue');
+                    setTimeout(function () {
+                        div.set('text', '?');
+                        div.removeClass('highlightValue');
+                    }, 5000);
+                } else {
+                    div.addClass('highlightValue');
+                    setTimeout(function () {
+                        div.removeClass('highlightValue');
+                    }, 5000);
+                }
+            }
+            if (data.clueMask[i].colour !== null) {
+                div.addClass('highlightColour' + data.clueMask[i].colour);
+                setTimeout(function () {
+                    div.removeClass('highlightColour' + data.clueMask[i].colour);
+                }, 5000);
+            }
+        };
+
+        socket.on('clueGiven', function (data) {
+            console.log('clueGiven received from server');
+            Y.one('#player1').removeClass('highlighted');
+            Game.yourTurn = false;
+            // Highlight cards based on indexes and clue mask
+            // Set 10 second timeout to hide the clue
+            for (var i = 0; i < data.clueMask.length; i++) {
+                clueHighlight(Game.players[data.toPlayerIndex][i].div, data.clueMask[i], data.toPlayerIndex);
+            }
         });
         socket.on('clueUsed', function (data) {
             console.log('clueUsed received from server');
+            // Decrement number of clues (change CSS on next token)
         });
         socket.on('clueRestored', function (data) {
             console.log('clueRestored received from server');
+            // Increment number of clues (change CSS on next token)
         });
         socket.on('lifeLost', function (data) {
             console.log('lifeLost received from server');
+            // Decrement number of lives (change CSS on next token)
         });
         socket.on('enterEndgame', function (data) {
             console.log('enterEndgame received from server');
+            // Show a notification on screen and change background colour
         });
         socket.on('deckExhausted', function (data) {
             console.log('deckExhausted received from server');
+            // Change deck to look empty
         });
 
         // Updates the game list display

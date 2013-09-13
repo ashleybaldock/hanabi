@@ -104,14 +104,26 @@
     </div>
 </div>
 
+<div class="panel" id="playordiscard">
+    <h1>Choose action</h1>
+    <div>
+        <form>
+            <button id="playordiscard_play">Play</button>
+            <button id="playordiscard_discard">Discard</button>
+            <button id="playordiscard_cancel">Cancel</button>
+        </form>
+    </div>
+</div>
+
 <div class="gameboard" id="gameboard">
 
-    <div id="cards"></div>
-    <!--<div class="card red" id="c1">1</div>
-    <div class="card blue" id="c2">2</div>
-    <div class="card green" id="c3">3</div>
-    <div class="card yellow" id="c4">4</div>
-    <div class="card white" id="c5">5</div>-->
+    <div id="cards">
+        <div class="card red highlightColourred" style="left: 0px" id="c1">1</div>
+        <div class="card blue highlightValue" style="left: 100px" id="c2">2</div>
+        <div class="card green" style="left: 200px" id="c3">3</div>
+        <div class="card yellow" style="left: 300px" id="c4">4</div>
+        <div class="card white" style="left: 400px" id="c5">5</div>
+    </div>
 
     <div class="player horizontal" id="player1">
         <h1>Player 1 (you)</h1>

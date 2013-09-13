@@ -1,8 +1,8 @@
 html, body, div, ul, li, p, img, h1, h2, h3, h4, h5, h6 {
     position: relative;
-    margin: 0px;
+    margin: 0;
+    padding: 0;
     border: 0px none;
-    padding: 0px;
     font-family: Verdana,Arial,Helvetica,sans-serif;
     font-size: 100.01%;
 }
@@ -81,10 +81,35 @@ h1 {
     position: absolute;
     text-align: center;
 }
+
 .player.highlighted {
-    background: #FFFF99;
+    background-color: rgb(255, 255, 153);
     box-shadow: 0px 1px 10px 0.5px rgb(255, 255, 153);
 }
+.highlightColourred {
+    box-shadow: 0px 1px 10px 0.5px rgb(113, 36, 26);
+    background-color: rgb(113, 36, 26);
+}
+.highlightColourblue {
+    box-shadow: 0px 1px 10px 0.5px rgb(0, 76, 109);
+    background-color: rgb(0, 76, 109);
+}
+.highlightColourgreen {
+    box-shadow: 0px 1px 10px 0.5px rgb(0, 143, 0);
+    background-color: rgb(0, 143, 0);
+}
+.highlightColouryellow {
+    box-shadow: 0px 1px 10px 0.5px rgb(255, 169, 40);
+    background-color: rgb(255, 169, 40);
+}
+.highlightColourwhite {
+    box-shadow: 0px 1px 10px 0.5px rgb(255, 255, 255);
+    background-color: rgb(255, 255, 255);
+}
+.highlightValue {
+    text-shadow: 0 0 0.2em rgb(255, 255, 153), 0 0 0.2em rgb(255, 255, 153), 0 0 0.2em rgb(255, 255, 153);
+}
+
 #fireworks, #gubbins {
     display: table;
     margin: 10px auto;
@@ -122,7 +147,6 @@ h1 {
     margin: 4px;
     z-index: 2;
     cursor: move;
-    font-size: 20px;
 }
 
 .token {
