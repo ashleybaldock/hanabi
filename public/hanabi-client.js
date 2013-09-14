@@ -20,7 +20,9 @@ var LocalStorage = {
     }
 };
 
-var socket = io.connect('http://neutrino.entropy.me.uk:3000');
+var hostname = 'http://' + document.location.hostname + ':3000';
+console.log('socket.io connecting to: ' + hostname);
+var socket = io.connect(hostname);
 
 socket.on('connect', function (data) {
     console.log('connect - sending routeClient');
@@ -644,13 +646,13 @@ YUI().use('event-base', 'event-resize', 'node', function (Y) {
             });
         });
 
-        quit.on('click', function(e) {
+        /*quit.on('click', function(e) {
             e.preventDefault(); e.stopPropagation();
             // TODO - end game in progress (leave if necessary)
             show_pane(splash);
-        });
+        });*/
 
-        about.on('click', function(e) {
+        /*about.on('click', function(e) {
             e.preventDefault(); e.stopPropagation();
             var pane = Y.one('#panel_about');
             show_pane(pane);
@@ -668,7 +670,7 @@ YUI().use('event-base', 'event-resize', 'node', function (Y) {
             pane.one('#panel_rules_close').on('click', function(e) {
                 hide_pane(pane);
             });
-        });
+        });*/
 
         Y.on('windowresize', function () {
             layout();
