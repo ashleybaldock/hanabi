@@ -1,39 +1,30 @@
 In lobby
 create a new game, setting number of players and game name
 View a list of games in progress, with details of name, max number of players and current number of players
-    Receive live updates of new games as they are created/their status is updated
 join a game that has yet to begin
-leave a game that has yet to begin, allowing someone else to join
-
-be informed of required technologies (javascript/cookies) if they are not enabled
 
 In game
-Re-join a game automatically if browser is closed or connection lost
 View the current status of the game
- - other players hands
+ - other players' hands
  - firework completion status
- - contents of the discard pile
+ - discard pile
  - Number of clue tokens remaining
  - Number of lives remaining
 View actions of other players during their turn
  - Card discarded
  - Card played
  - Clue given
-View history of actions by other players
- - History log
- - See what a player *should* know (e.g. based on clues given)
 Informed when it is their turn
 Perform key game actions
  - Play card
  - Discard card
+ - Give clue
 informed when endgame round begins (cards exhausted)
 informed when the game has ended
  - Lives exhausted (lose)
  - Cards exhausted (endgame round)
  - Endgame round complete (win + score/score category)
  - All firworks completed (win)
-offered option to start new game with same players
-offered option to quit
 
 On server
 Game play sequence recorded with game info for future analysis

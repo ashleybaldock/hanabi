@@ -76,11 +76,8 @@ suite('Firework', function () {
             });
         });
 
-        test('on construct should set value to 0', function (done) {
-            sut.getValue(function (value) {
-                expect(value).to.be(0);
-                done();
-            });
+        test('on construct should set value to 0', function () {
+            expect(sut.getValue()).to.be(0);
         });
     });
 
@@ -100,29 +97,16 @@ suite('Firework', function () {
     });
 
     suite('getValue()', function () {
-        test('should throw error if callback not a function', function () {
-            expect(function () {
-                sut.getValue();
-            }).to.throwException('Error: missing callback');
-        });
-
-        test('should execute callback with current value', function (done) {
-            sut.getValue(function (value) {
-                expect(value).to.be(0);
-                done();
-            });
+        test('should return current value', function () {
+            expect(sut.getValue()).to.be(0);
         });
 
         test('after correct play should show updated value', function (done) {
-            sut.getValue(function (value) {
-                expect(value).to.be(0);
-                sut.play(card1, function (err) {
-                    expect(err).to.be(undefined);
-                    sut.getValue(function (value) {
-                        expect(value).to.be(1);
-                        done();
-                    });
-                });
+            expect(sut.getValue()).to.be(0);
+            sut.play(card1, function (err) {
+                expect(err).to.be(undefined);
+                expect(sut.getValue()).to.be(1);
+                done();
             });
         });
     });
@@ -141,25 +125,19 @@ suite('Firework', function () {
             var invalidPlayCallback = sinon.spy();
             sut.registerForEvent('invalidPlay', invalidPlayCallback, context);
             expect(sut.isComplete()).to.be(false);
-            sut.getValue(function (value) {
-                expect(value).to.be(0);
-                sut.play(card1, function (err) {
+            expect(sut.getValue()).to.be(0);
+            sut.play(card1, function (err) {
+                expect(invalidPlayCallback.callCount).to.be(0);
+                expect(err).to.be(undefined);
+                expect(sut.isComplete()).to.be(false);
+                expect(sut.getValue()).to.be(1);
+                sut.play(card2, function (err) {
                     expect(invalidPlayCallback.callCount).to.be(0);
                     expect(err).to.be(undefined);
                     expect(sut.isComplete()).to.be(false);
-                    sut.getValue(function (value) {
-                        expect(value).to.be(1);
-                        sut.play(card2, function (err) {
-                            expect(invalidPlayCallback.callCount).to.be(0);
-                            expect(err).to.be(undefined);
-                            expect(sut.isComplete()).to.be(false);
-                            sut.getValue(function (value) {
-                                expect(value).to.be(2);
-                                expect(callback.callCount).to.be(0);
-                                done();
-                            });
-                        });
-                    });
+                    expect(sut.getValue()).to.be(2);
+                    expect(callback.callCount).to.be(0);
+                    done();
                 });
             });
         });

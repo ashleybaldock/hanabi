@@ -63,6 +63,9 @@ suite('Player.Interface implementations', function () {
                 test('should define endgameBeginsObserver() method', function () {
                     expect(sut.endgameBeginsObserver).to.be.a('function');
                 });
+                test('should define gameOverObserver() method', function () {
+                    expect(sut.gameOverObserver).to.be.a('function');
+                });
 
                 test('should define events', function () {
                     expect(sut.events).to.contain('playCard');

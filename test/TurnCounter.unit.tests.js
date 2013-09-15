@@ -61,7 +61,7 @@ suite('TurnCounter', function () {
             var context = new Object();
             sut.registerForEvent('nextTurn', callback, context);
             sut.endgame = true;
-            sut.remaining = 1;
+            sut.remaining = 0;
             sut.takeTurn(0);
             expect(callback.callCount).to.be(0);
         });
@@ -99,15 +99,23 @@ suite('TurnCounter', function () {
             sut.registerForEvent('endgameOver', callback, context);
             sut.takeTurn(0);
             expect(sut.turn).to.be(1);
+
             sut.enterEndgame();
             expect(callback.callCount).to.be(0);
+
             sut.takeTurn(1);
             expect(sut.turn).to.be(2);
             expect(sut.remaining).to.be(playerCount - 1);
             expect(callback.callCount).to.be(0);
+
             sut.takeTurn(2);
             expect(sut.turn).to.be(3);
             expect(sut.remaining).to.be(playerCount - 2);
+
+            sut.takeTurn(2);
+            expect(sut.turn).to.be(4);
+            expect(sut.remaining).to.be(0);
+
             expect(callback.calledOn(context)).to.be(true);
             expect(callback.calledWith(sut.turn)).to.be(true);
         });

@@ -129,7 +129,7 @@ h1 {
     float: left;
     margin: 4px;
     z-index: 2;
-    cursor: move;
+    cursor:pointer;
 }
 
 .token {

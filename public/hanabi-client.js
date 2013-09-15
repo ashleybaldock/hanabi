@@ -105,6 +105,7 @@ var Game = {
         discard: []
     },
     playerCount: 5,
+    active: false,
     yourTurn: false
 };
 
@@ -306,6 +307,8 @@ YUI().use('event-base', 'event-resize', 'node', function (Y) {
         var about = Y.one('#menu_about');
         var playordiscard = Y.one('#playordiscard');
         var giveclue = Y.one('#giveclue');
+        var gameover = Y.one('#game_over');
+        var endgame = Y.one('#endgame');
 
         var show_pane = function (pane) {
             var width = $(window).width();
@@ -354,6 +357,7 @@ YUI().use('event-base', 'event-resize', 'node', function (Y) {
             Game.playerCount = data.playerCount;
             Game.lives = data.lifetokens.lives;
             Game.clues = data.cluetokens.clues;
+            Game.active = true;
             Y.one('#draw').removeClass('empty');
             console.log('gameReady received from server');
             hide_pane(waiting);
@@ -362,8 +366,25 @@ YUI().use('event-base', 'event-resize', 'node', function (Y) {
             console.log('takeTurn received from server');
             // Display message indicating turn
             // TODO do this for all players, add playerIndex to takeTurn event
-            Y.one('#player1').addClass('highlighted');
-            Game.yourTurn = true;
+            if (Game.active) {
+                Y.one('#player1').addClass('highlighted');
+                Game.yourTurn = true;
+            }
+        });
+        socket.on('gameOver', function (data) {
+            console.log('gameOver received from server');
+            // Display message showing game results and with button to return to splash
+            if (data.win) {
+                gameover.one('#lose').setStyle('display', 'none');
+                gameover.one('#win').setStyle('display', 'block');
+                gameover.one('#score').set('text', data.score);
+            } else {
+                gameover.one('#lose').setStyle('display', 'block');
+                gameover.one('#win').setStyle('display', 'none');
+            }
+            Game.active = false;
+            Game.yourTurn = false;
+            show_pane(gameover);
         });
 
         var addCard = function (playerIndex, cardIndex, cardData) {
@@ -535,6 +556,11 @@ YUI().use('event-base', 'event-resize', 'node', function (Y) {
         socket.on('enterEndgame', function (data) {
             console.log('enterEndgame received from server');
             // Show a notification on screen and change background colour
+            Y.one('body').setStyle('backgroundColor', '#FF9999');
+            show_pane(endgame);
+            setTimeout(function () {
+                hide_pane(endgame);
+            }, 5000);
         });
         socket.on('deckExhausted', function (data) {
             console.log('deckExhausted received from server');
@@ -588,14 +614,12 @@ YUI().use('event-base', 'event-resize', 'node', function (Y) {
         });
 
         newgame.one('#new_game_cancel').on('click', function(e) {
-            e.preventDefault(); e.stopPropagation();
+            e.preventDefault();
             hide_pane(newgame);
             show_pane(splash);
         });
         newgame.one('#new_game_create').on('click', function(e) {
-            e.preventDefault(); e.stopPropagation();
-            // TODO trigger game creation (after field check)
-            // Then jump to game in progress
+            e.preventDefault();
             var name = Y.one('#new_game_name').get('value');
             var players = Y.one("#new_game_players").get('selectedIndex') + 2;
             console.log('name: ' + name + ', players: ' + players);

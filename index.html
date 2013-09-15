@@ -34,7 +34,7 @@
         <form>
             <div>
                 <label for="new_game_name">Game name:</label>
-                <input type="text" id="new_game_name" />
+                <input type="text" id="new_game_name" value="NewGame"/>
             </div>
             <div>
                 <label for="new_game_players"># of players:</label>
@@ -79,6 +79,28 @@
     <li><a id="menu_rules" href="">Rules</a></li>
     <li class="end"><a id="menu_about" href="">About</a></li>
 </ul>-->
+
+<div class="panel" id="endgame">
+    <h1>Endgame!</h1>
+    <div>
+        Deck exhausted, one more turn for each player!
+    </div>
+</div>
+
+<div class="panel" id="game_over">
+    <h1>Game Over</h1>
+    <div id="lose">
+        Sorry you lost, try again?
+    </div>
+    <div id="win">
+        Success! Your score was: <span id="score"> </span>
+    </div>
+    <div>
+        <form>
+            <button id="game_over_reset">Play again</button>
+        </form>
+    </div>
+</div>
 
 <div class="panel" id="panel_rules">
     <h1>Rules</h1>

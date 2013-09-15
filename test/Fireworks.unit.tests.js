@@ -80,6 +80,10 @@ suite('Fireworks', function () {
             expect(sut.isComplete).to.be.a('function');
         });
 
+        test('should define getScore() method', function () {
+            expect(sut.getScore).to.be.a('function');
+        });
+
         test('should define events', function () {
             expect(sut.events).to.contain('fireworkComplete');
             expect(sut.events).to.contain('allFireworksComplete');
@@ -129,6 +133,17 @@ suite('Fireworks', function () {
         });
     });
 
+    suite('getScore()', function () {
+        test('should return current score based on results of value() calls on fireworks', function () {
+            sinon.stub(redFirework, 'getValue').returns(4);
+            sinon.stub(blueFirework, 'getValue').returns(5);
+            sinon.stub(greenFirework, 'getValue').returns(2);
+            sinon.stub(yellowFirework, 'getValue').returns(4);
+            sinon.stub(whiteFirework, 'getValue').returns(1);
+            expect(sut.getScore()).to.be(16);
+        });
+    });
+
     suite('onFireworkComplete()', function () {
         test('if colour not valid option should ignore', function () {
             var callback = sinon.spy();
@@ -160,6 +175,7 @@ suite('Fireworks', function () {
             sut.registerForEvent('allFireworksComplete', callbackAll, context);
             sut.onFireworkComplete('red');
             expect(callbackAll.calledOn(context)).to.be(true);
+            expect(callbackAll.calledWith(25)).to.be(true);
             expect(callback.calledOn(context)).to.be(true);
             expect(callback.calledWithExactly('red')).to.be(true);
             trueStub.restore();
