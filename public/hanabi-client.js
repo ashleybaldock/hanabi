@@ -286,6 +286,9 @@ var layout = function () {
         }
 
         // Render clue/life tokens
+        for (var i = 1; i <= Game.clues; i++) {
+            clues.one('#clue_token_' + i).removeClass('flipped');
+        }
         for (var i = 9; i > Game.clues; i--) {
             clues.one('#clue_token_' + i).addClass('flipped');
         }
