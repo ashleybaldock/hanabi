@@ -20,7 +20,8 @@ var LocalStorage = {
     }
 };
 
-var hostname = 'http://' + document.location.hostname + ':3000';
+//var hostname = 'http://' + document.location.hostname + ':3000';
+var hostname = 'http://' + document.location.hostname;
 console.log('socket.io connecting to: ' + hostname);
 var socket = io.connect(hostname);
 
